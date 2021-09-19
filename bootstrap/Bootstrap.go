@@ -15,7 +15,3 @@ func New() *BootStrap {
 	}
 	return &b
 }
-
-func initLogger() {
-
-}
