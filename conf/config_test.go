@@ -6,6 +6,7 @@ import (
 )
 
 func TestGetConfig(t *testing.T) {
+	InitConfig("../git-knowledge.ini")
 	fmt.Println(GetConfig().Log.Level)
 	fmt.Println(GetConfig().Log.Dir)
 }
