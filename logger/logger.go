@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 )
 
-// InitLog 初始化日志
-func InitLog() {
+// InitLogger 初始化日志
+func InitLogger() {
 	// 读取配置并转换为zap的日志级别
 	level := convZapLevel(conf.GetConfig().Log.Level)
 	// 读取配置并将日志文件夹位置转换为绝对路径

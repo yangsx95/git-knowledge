@@ -14,7 +14,7 @@ type BootStrap struct {
 
 func NewBootstrap() *BootStrap {
 	conf.InitConfig("./git-knowledge.ini")
-	logger.InitLog()
+	logger.InitLogger()
 	engine := InitGinEngine()
 
 	b := BootStrap{
