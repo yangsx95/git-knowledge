@@ -25,12 +25,15 @@ func InitResource(host, port, database, username, password string) (*Resource, e
 	}
 	connectionUrl := ""
 	if username != "" {
-		connectionUrl = fmt.Sprintf("mongodb://%s:%s@%s:%s/%s", username, password, host, port, database)
+		connectionUrl = fmt.Sprintf("mongodb://%s:%s@%s:%s", username, password, host, port)
 	} else {
-		connectionUrl = fmt.Sprintf("mongodb://%s:%s/%s", host, port, database)
+		connectionUrl = fmt.Sprintf("mongodb://%s:%s", host, port)
 	}
 
 	mongoClient, err := mongo.NewClient(options.Client().ApplyURI(connectionUrl))
+	if err != nil {
+		return nil, err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
