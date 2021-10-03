@@ -23,6 +23,7 @@ func GetConfig() *Config {
 type Config struct {
 	Log    LogConfig    `ini:"log"`
 	Github GithubConfig `ini:"github"`
+	Mongo  MongoConfig  `ini: "mongo"`
 }
 
 // LogConfig 日志配置section
@@ -34,6 +35,10 @@ type LogConfig struct {
 // GithubConfig 配置信息
 type GithubConfig struct {
 	ClientId string `ini:"client_id"`
+}
+
+type MongoConfig struct {
+	Url string `ini:"url"`
 }
 
 // InitConfig 指定配置文件初始化配置

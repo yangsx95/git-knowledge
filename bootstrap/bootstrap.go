@@ -3,8 +3,12 @@ package bootstrap
 import (
 	"git-knowledge/conf"
 	"git-knowledge/logger"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/mongo"
 	"github.com/gin-gonic/gin"
+	"github.com/globalsign/mgo"
 	"go.uber.org/zap"
+	"log"
 	"time"
 )
 
@@ -32,11 +36,25 @@ func (b *BootStrap) Start() {
 
 func InitGinEngine() *gin.Engine {
 	engine := gin.New()
-	engine.Use(GinLogger(logger.GetLogger()))
+	// 日志中间件
+	engine.Use(GinLoggerMiddleware(logger.GetLogger()))
+	// session处理
+	engine.Use(GinSessionMiddleware())
+
 	return engine
 }
 
-func GinLogger(logger *zap.Logger) gin.HandlerFunc {
+func GinSessionMiddleware() gin.HandlerFunc {
+	session, err := mgo.Dial(conf.GetConfig().Mongo.Url)
+	if err != nil {
+		log.Fatalln("初始化Session出现异常", err)
+	}
+	c := session.DB("").C("sessions")
+	store := mongo.NewStore(c, 3600, true, []byte("secret"))
+	return sessions.Sessions("mongoSession", store)
+}
+
+func GinLoggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path
