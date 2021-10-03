@@ -1,7 +1,7 @@
 package dao
 
 import (
-	"git-knowledge/app/model"
+	"git-knowledge/dao/model"
 	"git-knowledge/db"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
@@ -15,7 +15,7 @@ func TestUserDaoImpl_InsertUser(t *testing.T) {
 		panic(err)
 	}
 
-	dao := NewUserDao(resource)
+	dao := GetUserDaoInstance(resource)
 	err = dao.InsertUser(model.User{
 		Id:        primitive.ObjectID{},
 		Username:  "zhangsan",
