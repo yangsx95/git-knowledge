@@ -27,7 +27,13 @@ func NewBootstrap() *BootStrap {
 
 	logger.InitLogger(os.Getenv("LOG_LEVEL"), os.Getenv("LOG_DIR"))
 
-	resource, err := db.InitResource(os.Getenv("MONGO_HOST")+":"+os.Getenv("MONGO_PORT"), os.Getenv("MONGO_DATABASE"))
+	resource, err := db.InitResource(
+		os.Getenv("MONGO_HOST"),
+		os.Getenv("MONGO_PORT"),
+		os.Getenv("MONGO_DATABASE"),
+		os.Getenv("MONGO_USERNAME"),
+		os.Getenv("MONGO_PASSWORD"),
+	)
 	if err != nil {
 		logger.Fatal("连接mongodb出现错误", err)
 	}
