@@ -21,13 +21,19 @@ func GetConfig() *Config {
 
 // Config 配置信息结构体
 type Config struct {
-	Log LogConfig `ini:"log"`
+	Log    LogConfig    `ini:"log"`
+	Github GithubConfig `ini:"github"`
 }
 
 // LogConfig 日志配置section
 type LogConfig struct {
 	Level string `ini:"level"`
 	Dir   string `ini:"dir"`
+}
+
+// GithubConfig 配置信息
+type GithubConfig struct {
+	ClientId string `ini:"client_id"`
 }
 
 // InitConfig 指定配置文件初始化配置
@@ -44,11 +50,12 @@ func initPath() {
 func initIniConfig(path string) {
 	// 将路径处理为绝对路径
 	absP, _ := filepath.Abs(path)
+	// 加载配置文件
 	confIni, err := ini.Load(absP)
 	if err != nil {
 		log.Fatalf("读取配置文件出现错误, 路径: %s, 错误信息： %s\n", absP, err)
 	}
-
+	// 映射配置文件到配置结构体
 	config = Config{ // 这里提供默认值
 		Log: LogConfig{
 			Level: "DEBUG",
