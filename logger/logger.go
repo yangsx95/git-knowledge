@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"git-knowledge/conf"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"log"
@@ -10,11 +9,11 @@ import (
 )
 
 // InitLogger 初始化日志
-func InitLogger() {
+func InitLogger(level, dir string) {
 	// 读取配置并转换为zap的日志级别
-	level := convZapLevel(conf.GetConfig().Log.Level)
+	zapLevel := convZapLevel(level)
 	// 读取配置并将日志文件夹位置转换为绝对路径
-	logDir, _ := filepath.Abs(conf.GetConfig().Log.Dir)
+	logDir, _ := filepath.Abs(dir)
 	// 如果文件夹不存在则创建
 	createDirIfNotExist(logDir)
 	// 生成日志输出路径
@@ -22,7 +21,7 @@ func InitLogger() {
 
 	// 创建日志配置，并构建日志记录器对象
 	config := zap.Config{
-		Level:            level,
+		Level:            zapLevel,
 		Development:      false,
 		Encoding:         "console",
 		EncoderConfig:    zap.NewDevelopmentEncoderConfig(),
