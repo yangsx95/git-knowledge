@@ -1,28 +1,42 @@
-package bootstrap
+package app
 
 import (
-	"git-knowledge/conf"
+	"git-knowledge/db"
 	"git-knowledge/logger"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/mongo"
 	"github.com/gin-gonic/gin"
 	"github.com/globalsign/mgo"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"log"
+	"os"
 	"time"
 )
 
 type BootStrap struct {
 	engine *gin.Engine
+	db     *db.Resource
 }
 
 func NewBootstrap() *BootStrap {
-	conf.InitConfig("./git-knowledge.ini")
-	logger.InitLogger()
+	err := godotenv.Load(".env")
+	if err != nil {
+		panic("加载配置文件.env出现错误")
+	}
+
+	logger.InitLogger(os.Getenv("LOG_LEVEL"), os.Getenv("LOG_DIR"))
+
+	resource, err := db.InitResource(os.Getenv("MONGO_HOST")+":"+os.Getenv("MONGO_PORT"), os.Getenv("MONGO_DATABASE"))
+	if err != nil {
+		logger.Fatal("连接mongodb出现错误", err)
+	}
+
 	engine := InitGinEngine()
 
 	b := BootStrap{
 		engine: engine,
+		db:     resource,
 	}
 	return &b
 }
@@ -45,7 +59,7 @@ func InitGinEngine() *gin.Engine {
 }
 
 func GinSessionMiddleware() gin.HandlerFunc {
-	session, err := mgo.Dial(conf.GetConfig().Mongo.Url)
+	session, err := mgo.Dial(os.Getenv("MONGO_HOST") + "+" + os.Getenv("MONGO_PORT"))
 	if err != nil {
 		log.Fatalln("初始化Session出现异常", err)
 	}

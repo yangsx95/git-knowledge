@@ -19,6 +19,7 @@ func (r *Resource) Close() {
 func InitResource(url, database string) (*Resource, error) {
 	err := godotenv.Load(".env")
 	if err != nil {
+		return nil, err
 	}
 
 	mongoClient, err := mongo.NewClient(options.Client().ApplyURI(url))

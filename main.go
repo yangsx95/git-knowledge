@@ -1,8 +1,8 @@
 package main
 
-import "git-knowledge/bootstrap"
+import "git-knowledge/app"
 
 func main() {
-	bs := bootstrap.NewBootstrap()
+	bs := app.NewBootstrap()
 	bs.Start()
 }
