@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
@@ -16,13 +15,15 @@ type Resource struct {
 func (r *Resource) Close() {
 }
 
-func InitResource(url, database string) (*Resource, error) {
-	err := godotenv.Load(".env")
-	if err != nil {
-		return nil, err
+func InitResource(url, database, username, password string) (*Resource, error) {
+	client := options.Client()
+	if username != "" {
+		client.Auth.Username = username
 	}
-
-	mongoClient, err := mongo.NewClient(options.Client().ApplyURI(url))
+	if password != "" {
+		client.Auth.Password = password
+	}
+	mongoClient, err := mongo.NewClient(client.ApplyURI(url))
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
