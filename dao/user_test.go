@@ -3,7 +3,6 @@ package dao
 import (
 	"git-knowledge/dao/model"
 	"git-knowledge/db"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"testing"
 	"time"
 )
@@ -17,13 +16,15 @@ func TestUserDaoImpl_InsertUser(t *testing.T) {
 
 	dao := GetUserDaoInstance(resource)
 	err = dao.InsertUser(model.User{
-		Id:        primitive.ObjectID{},
-		Username:  "zhangsan",
-		Password:  "123456",
-		Name:      "张三",
-		AvatarUrl: "我是图片地址",
-		Phone:     "18362450836",
-		CreatedAt: time.Time{},
+		Userid:    "root",
+		Password:  "root123",
+		Nickname:  "管理员",
+		Email:     "root@qq.com",
+		Phone:     "18878092222",
+		AvatarUrl: "",
+		CreatedAt: time.Now(),
+		UpdateAt:  time.Now(),
+		Github:    model.Github{AccessToken: "123"},
 	})
 	if err != nil {
 		panic(err)
