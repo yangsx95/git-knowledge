@@ -15,16 +15,11 @@ type userDaoImpl struct {
 	collection *mongo.Collection
 }
 
-var userDaoInstance UserDao
-
-func GetUserDaoInstance(resource *db.Resource) UserDao {
-	if userDaoInstance == nil {
-		userDaoInstance = &userDaoImpl{
-			resource:   resource,
-			collection: resource.DB.Collection("user"),
-		}
+func NewUserDao(resource *db.Resource) UserDao {
+	return &userDaoImpl{
+		resource:   resource,
+		collection: resource.DB.Collection("user"),
 	}
-	return userDaoInstance
 }
 
 func (u *userDaoImpl) InsertUser(user model.User) error {

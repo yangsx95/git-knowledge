@@ -11,19 +11,38 @@ import (
 )
 
 type BootStrap struct {
-	engine *gin.Engine
-	db     *db.Resource
+	engine          *gin.Engine
+	db              *db.Resource
+	Dao             *Dao
+	ServiceProvider *ServiceProvider
 }
 
 func NewBootstrap() *BootStrap {
+	b := BootStrap{}
+	// 加载配置文件
+	loadConfig()
+	// 初始化日志
+	logger.InitLogger(os.Getenv("LOG_LEVEL"), os.Getenv("LOG_DIR"))
+	// 初始化数据库
+	b.db = initDb()
+	// 初始化Dao
+	b.Dao = initDao(&b)
+	// 初始化ServiceProvider
+	b.ServiceProvider = initServiceProvider(&b)
+	// 初始化web(gin)引擎
+	b.engine = InitGinEngine()
+	return &b
+}
+
+func loadConfig() {
 	err := godotenv.Load(".env")
 	if err != nil {
 		panic("加载配置文件.env出现错误")
 	}
+}
 
-	logger.InitLogger(os.Getenv("LOG_LEVEL"), os.Getenv("LOG_DIR"))
-
-	resource, err := db.InitResource(
+func initDb() *db.Resource {
+	resource, err := db.NewResource(
 		os.Getenv("MONGO_HOST"),
 		os.Getenv("MONGO_PORT"),
 		os.Getenv("MONGO_DATABASE"),
@@ -33,14 +52,7 @@ func NewBootstrap() *BootStrap {
 	if err != nil {
 		logger.Fatal("连接mongodb出现错误", err)
 	}
-
-	engine := InitGinEngine()
-
-	b := BootStrap{
-		engine: engine,
-		db:     resource,
-	}
-	return &b
+	return resource
 }
 
 func (b *BootStrap) Start() {
@@ -54,7 +66,6 @@ func InitGinEngine() *gin.Engine {
 	engine := gin.New()
 	engine.Use(middlewares.GinLoggerMiddleware(logger.GetLogger()))
 	engine.Use(middlewares.GinSessionMiddleware())
-
 	controller.ApplyLoginRouter(&engine.RouterGroup, nil)
 
 	return engine

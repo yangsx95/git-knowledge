@@ -2,7 +2,9 @@ package main
 
 import "git-knowledge/app"
 
+var APP *app.BootStrap
+
 func main() {
-	bs := app.NewBootstrap()
-	bs.Start()
+	APP = app.NewBootstrap()
+	APP.Start()
 }

@@ -1,23 +1,31 @@
-package resp
+package controller
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+	"git-knowledge/errors"
+)
 
 type Response struct {
-	Code int         `json:"code"` // 错误码
+	Code errors.Code `json:"code"` // 错误码
 	Msg  string      `json:"msg"`  // 错误描述
 	Data interface{} `json:"data"` // 返回数据
 }
 
-func build(code int, msg string) Response {
+func build(code errors.Code, fields ...interface{}) Response {
+	target := code.Template()
+	if fields != nil {
+		target = fmt.Sprintf(target, fields)
+	}
 	return Response{
 		Code: code,
-		Msg:  msg,
+		Msg:  target,
 	}
 }
 
 var (
-	Ok  = build(200, "success")
-	Err = build(500, "系统内部错误")
+	Ok  = build(errors.CodeOk)
+	Err = build(errors.CodeValidateErr)
 
 	ErrParam = build(501, "参数有误")
 )
@@ -47,7 +55,7 @@ func (res *Response) ToString() string {
 		Msg  string      `json:"msg"`
 		Data interface{} `json:"data"`
 	}{
-		Code: res.Code,
+		//Code: res.Code,
 		Msg:  res.Msg,
 		Data: res.Data,
 	}

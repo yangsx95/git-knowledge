@@ -7,15 +7,19 @@ import (
 	"time"
 )
 
-func TestUserDaoImpl_InsertUser(t *testing.T) {
-
-	resource, err := db.InitResource("127.0.0.1", "27017", "test", "root", "root123")
+func InitResourceForTest() *db.Resource {
+	resource, err := db.NewResource("127.0.0.1", "27017", "test", "root", "root123")
 	if err != nil {
 		panic(err)
 	}
+	return resource
+}
 
-	dao := GetUserDaoInstance(resource)
-	err = dao.InsertUser(model.User{
+func TestUserDaoImpl_InsertUser(t *testing.T) {
+	resource := InitResourceForTest()
+
+	dao := NewUserDao(resource)
+	err := dao.InsertUser(model.User{
 		Userid:    "root",
 		Password:  "root123",
 		Nickname:  "管理员",

@@ -20,4 +20,4 @@
 # Intellij IDEA
 .idea
 
-.logs
+./logs

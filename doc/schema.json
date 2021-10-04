@@ -1,0 +1,15 @@
+{
+  "user": {
+    "userid": "yangsx95",
+    "password": "123456",
+    "nickname": "我的昵称",
+    "email": "yangsx95@qq.com",
+    "phone": "电话",
+    "avatar_url": "头像",
+    "created_at": "注册时间",
+    "update_at": "上次信息更新时间",
+    "github": {
+      "access_token": "123"
+    }
+  }
+}

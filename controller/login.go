@@ -1,18 +1,15 @@
 package controller
 
 import (
-	"git-knowledge/dao"
 	"git-knowledge/db"
 	"github.com/gin-gonic/gin"
 )
 
 func ApplyLoginRouter(rg *gin.RouterGroup, resource *db.Resource) {
-	userDao := dao.GetUserDaoInstance(resource)
-	rg.POST("login", login(userDao))
+	rg.POST("registry", JSONHandler(registry))
 }
 
-func login(userDao dao.UserDao) func(ctx *gin.Context) {
-	return func(ctx *gin.Context) {
+func registry(ctx *gin.Context) (interface{}, error) {
 
-	}
+	return nil, nil
 }

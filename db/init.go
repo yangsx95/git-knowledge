@@ -16,7 +16,7 @@ type Resource struct {
 func (r *Resource) Close() {
 }
 
-func InitResource(host, port, database, username, password string) (*Resource, error) {
+func NewResource(host, port, database, username, password string) (*Resource, error) {
 	if host == "" {
 		host = "127.0.0.1"
 	}
