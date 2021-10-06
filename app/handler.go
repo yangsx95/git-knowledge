@@ -134,9 +134,9 @@ func errToResp(err error) *result.Response {
 	switch err.(type) {
 	case result.ServiceError: // 如果是服务错误，使用服务码构建返回对象
 		e := err.(result.ServiceError)
-		response = result.Build(e.Code).WithDetail(e.Msg)
+		response = result.Build(e.Code).WithDetail(e.Detail)
 	default: // 如果是未知异常，则抛出系统内部错误
-		response = result.Build(result.CodeInnerError)
+		response = result.Build(result.CodeInnerError).WithDetail(err.Error())
 	}
 	return response
 }
