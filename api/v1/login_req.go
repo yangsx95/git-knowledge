@@ -1,4 +1,4 @@
-package request
+package v1
 
 type RegistryRequest struct {
 	Userid    string `json:"userid"`

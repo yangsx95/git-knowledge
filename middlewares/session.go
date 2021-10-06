@@ -10,7 +10,7 @@ import (
 )
 
 func GinSessionMiddleware() gin.HandlerFunc {
-	session, err := mgo.Dial(os.Getenv("MONGO_HOST") + "+" + os.Getenv("MONGO_PORT"))
+	session, err := mgo.Dial(os.Getenv("MONGO_HOST") + ":" + os.Getenv("MONGO_PORT"))
 	if err != nil {
 		log.Fatalln("初始化Session出现异常", err)
 	}

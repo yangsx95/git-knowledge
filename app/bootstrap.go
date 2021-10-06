@@ -1,7 +1,6 @@
 package app
 
 import (
-	"git-knowledge/controller"
 	"git-knowledge/db"
 	"git-knowledge/logger"
 	"git-knowledge/middlewares"
@@ -11,10 +10,10 @@ import (
 )
 
 type BootStrap struct {
-	engine          *gin.Engine
-	db              *db.Resource
-	Dao             *Dao
-	ServiceProvider *ServiceProvider
+	engine *gin.Engine
+	db     *db.Resource
+	Dao    *Dao
+	Api    *Api
 }
 
 func NewBootstrap() *BootStrap {
@@ -25,12 +24,14 @@ func NewBootstrap() *BootStrap {
 	logger.InitLogger(os.Getenv("LOG_LEVEL"), os.Getenv("LOG_DIR"))
 	// 初始化数据库
 	b.db = initDb()
-	// 初始化Dao
-	b.Dao = initDao(&b)
-	// 初始化ServiceProvider
-	b.ServiceProvider = initServiceProvider(&b)
 	// 初始化web(gin)引擎
-	b.engine = InitGinEngine()
+	b.initGinEngine()
+	// 初始化Dao组件
+	b.Dao = initDao(&b)
+	// 初始化Api组件
+	b.Api = initApi(&b)
+	// 初始化gin router
+	initRouter(b.engine.RouterGroup, b.Api)
 	return &b
 }
 
@@ -62,11 +63,9 @@ func (b *BootStrap) Start() {
 	}
 }
 
-func InitGinEngine() *gin.Engine {
+func (b *BootStrap) initGinEngine() {
 	engine := gin.New()
 	engine.Use(middlewares.GinLoggerMiddleware(logger.GetLogger()))
 	engine.Use(middlewares.GinSessionMiddleware())
-	controller.ApplyLoginRouter(&engine.RouterGroup, nil)
-
-	return engine
+	b.engine = engine
 }
