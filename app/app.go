@@ -5,19 +5,28 @@ import (
 	"git-knowledge/logger"
 	"git-knowledge/middlewares"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/locales/en"
+	"github.com/go-playground/locales/zh"
+	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
+	zhtrans "github.com/go-playground/validator/v10/translations/zh"
 	"github.com/joho/godotenv"
 	"os"
 )
 
-type BootStrap struct {
-	engine *gin.Engine
-	db     *db.Resource
-	Dao    *Dao
-	Api    *Api
+// App 应用程序对象
+type App struct {
+	engine       *gin.Engine
+	db           *db.Resource
+	Dao          *Dao
+	Api          *Api
+	ut           *ut.UniversalTranslator
+	errorHandler *ErrorHandler
 }
 
-func NewBootstrap() *BootStrap {
-	b := BootStrap{}
+func NewApp() *App {
+	b := App{}
 	// 加载配置文件
 	loadConfig()
 	// 初始化日志
@@ -30,8 +39,12 @@ func NewBootstrap() *BootStrap {
 	b.Dao = initDao(&b)
 	// 初始化Api组件
 	b.Api = initApi(&b)
+	// 初始化翻译器
+	b.initTranslator()
+	// 初始化错误处理器
+	b.initErrorHandler()
 	// 初始化gin router
-	initRouter(b.engine.RouterGroup, b.Api)
+	b.initRouter(b.engine.RouterGroup, b.Api)
 	return &b
 }
 
@@ -56,16 +69,32 @@ func initDb() *db.Resource {
 	return resource
 }
 
-func (b *BootStrap) Start() {
-	err := b.engine.Run(":8080")
+func (a *App) Start() {
+	err := a.engine.Run(":8080")
 	if err != nil {
 		logger.Fatal("启动服务出现错误 %s", err)
 	}
 }
 
-func (b *BootStrap) initGinEngine() {
+func (a *App) initGinEngine() {
 	engine := gin.New()
 	engine.Use(middlewares.GinLoggerMiddleware(logger.GetLogger()))
 	engine.Use(middlewares.GinSessionMiddleware())
-	b.engine = engine
+	a.engine = engine
+}
+
+func (a *App) initTranslator() {
+	zhT := zh.New()
+	enT := en.New()
+	a.ut = ut.New(zhT, zhT, enT)
+	validate := binding.Validator.Engine().(*validator.Validate)
+	translator, _ := a.ut.GetTranslator("zh")
+	err := zhtrans.RegisterDefaultTranslations(validate, translator)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (a *App) initErrorHandler() {
+	a.errorHandler = NewErrorHandler()
 }

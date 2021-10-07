@@ -13,7 +13,7 @@ type Dao struct {
 	UserDao dao.UserDao
 }
 
-func initDao(b *BootStrap) *Dao {
+func initDao(b *App) *Dao {
 	d := Dao{}
 
 	d.UserDao = dao.NewUserDao(b.db)
@@ -25,7 +25,7 @@ type Api struct {
 	LoginApi v1.LoginApi
 }
 
-func initApi(b *BootStrap) *Api {
+func initApi(b *App) *Api {
 	a := Api{}
 
 	a.LoginApi = v1.NewLoginApi(b.Dao.UserDao)
@@ -33,6 +33,6 @@ func initApi(b *BootStrap) *Api {
 	return &a
 }
 
-func initRouter(r gin.RouterGroup, b *Api) {
-	r.POST("/registry", Handler(b.LoginApi.Registry))
+func (a *App) initRouter(r gin.RouterGroup, b *Api) {
+	r.POST("/registry", a.Handler(b.LoginApi.Registry))
 }

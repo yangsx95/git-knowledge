@@ -4,10 +4,11 @@ import (
 	"git-knowledge/result"
 	"git-knowledge/util"
 	"github.com/gin-gonic/gin"
+	ut "github.com/go-playground/universal-translator"
 	"reflect"
 )
 
-func Handler(apiMethod interface{}) func(context *gin.Context) {
+func (a *App) Handler(apiMethod interface{}) func(context *gin.Context) {
 	validateHandlerMethod(apiMethod)
 
 	mT := reflect.TypeOf(apiMethod)
@@ -15,6 +16,11 @@ func Handler(apiMethod interface{}) func(context *gin.Context) {
 
 	// 构造gin路由处理函数
 	return func(context *gin.Context) {
+		translator, ok := a.ut.GetTranslator("zh")
+		if !ok {
+			translator, _ = a.ut.GetTranslator("zh")
+		}
+
 		// 准备参数对象列表
 		pVs := make([]reflect.Value, 0)
 		for i := 0; i < mT.NumIn(); i++ {
@@ -30,7 +36,7 @@ func Handler(apiMethod interface{}) func(context *gin.Context) {
 			// 将请求信息绑定到参数对象中
 			err := context.ShouldBind(pV.Interface())
 			if err != nil {
-				context.JSON(200, result.Build(result.CodeReqParamErr).WithDetail(err.Error()))
+				context.JSON(200, a.errorHandler.Handler(err, &translator))
 				return
 			}
 			pVs = append(pVs, pV.Elem())
@@ -40,7 +46,7 @@ func Handler(apiMethod interface{}) func(context *gin.Context) {
 		rts := mV.Call(pVs)
 
 		// 根据函数返回值生成结果
-		response := generateResult(rts)
+		response := generateResult(a.errorHandler, &translator, rts)
 
 		// 设置http响应体
 		context.JSON(200, response)
@@ -103,7 +109,7 @@ func validateHandlerMethod(apiMethod interface{}) {
 
 }
 
-func generateResult(rts []reflect.Value) *result.Response {
+func generateResult(handler *ErrorHandler, translator *ut.Translator, rts []reflect.Value) *result.Response {
 	if len(rts) == 0 { // 无返回值
 		return result.Build(result.CodeOk)
 	}
@@ -112,7 +118,7 @@ func generateResult(rts []reflect.Value) *result.Response {
 		rv := rts[0].Interface()
 		// error
 		if util.IsErrType(rts[0].Type()) && rv != nil {
-			return errToResp(rv.(error))
+			return handler.Handler(rv.(error), translator)
 		}
 		// success
 		return result.Build(result.CodeOk).WithData(rv)
@@ -120,23 +126,8 @@ func generateResult(rts []reflect.Value) *result.Response {
 		rv0 := rts[0].Interface()
 		rv1 := rts[1].Interface().(error)
 		if rv1 != nil {
-			return errToResp(rv1)
+			return handler.Handler(rv1.(error), translator)
 		}
 		return result.Build(result.CodeOk).WithData(rv0)
 	}
-}
-
-func errToResp(err error) *result.Response {
-	if err == nil {
-		panic("err不能为nil")
-	}
-	var response *result.Response
-	switch err.(type) {
-	case result.ServiceError: // 如果是服务错误，使用服务码构建返回对象
-		e := err.(result.ServiceError)
-		response = result.Build(e.Code).WithDetail(e.Detail)
-	default: // 如果是未知异常，则抛出系统内部错误
-		response = result.Build(result.CodeInnerError).WithDetail(err.Error())
-	}
-	return response
 }
