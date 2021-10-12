@@ -33,12 +33,17 @@ func (ehf *ErrorHandler) Handler(err error, translator *ut.Translator) *Response
 		for _, e := range errs {
 			errList = append(errList, e.Translate(*translator))
 		}
-		response = Build(CodeReqParamErr).WithDetail(strings.Join(errList, "|"))
+		response = Build(CodeValidateErr).WithDetail(strings.Join(errList, "|"))
 	case *echo.HTTPError:
 		err := err.(*echo.HTTPError)
-		if err.Code == 404 {
+		switch err.Code {
+		case 400:
+			response = Build(CodeParseBodyErr)
+		case 404:
 			response = Build(CodeNotFoundErr)
-		} else {
+		case 405:
+			response = Build(CodeMethodErr)
+		default:
 			response = Build(CodeInnerError).WithDetail(err.Error())
 		}
 	default: // 如果是未知异常，则抛出系统内部错误

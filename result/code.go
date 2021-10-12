@@ -7,9 +7,10 @@ type Code uint
 const (
 	CodeOk Code = 200
 
-	CodeNotFoundErr = 404
-	CodeValidateErr = 410
-	CodeReqParamErr = 411
+	CodeParseBodyErr = 400
+	CodeNotFoundErr  = 404
+	CodeMethodErr    = 405
+	CodeValidateErr  = 410
 
 	CodeInnerError  Code = 500
 	CodeServiceFail Code = 501
@@ -21,12 +22,14 @@ func (c Code) String() string {
 	case CodeOk:
 		return "请求成功"
 
+	case CodeParseBodyErr:
+		return "错误的请求内容，可能与Content-Type不匹配"
 	case CodeNotFoundErr:
 		return "接口不存在"
 	case CodeValidateErr:
-		return "校验出错"
-	case CodeReqParamErr:
 		return "请求参数有误"
+	case CodeMethodErr:
+		return "不支持的请求方法"
 
 	case CodeServiceFail:
 		return "交易出错"

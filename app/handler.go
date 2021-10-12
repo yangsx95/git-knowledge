@@ -52,7 +52,16 @@ func (a *App) Handler(apiMethod interface{}) func(context echo.Context) error {
 
 		// 根据函数返回值生成结果，并返回响应体
 		response := generateResult(a.errorHandler, &translator, rts)
-		err := context.JSON(200, response)
+
+		var err error
+		// 根据Accept头决定要返回的数据类型
+		accept := context.Request().Header.Get("Accept")
+		switch accept {
+		case "application/json":
+			err = context.JSON(200, response)
+		case "application/xml":
+			err = context.XML(200, response)
+		}
 		return err
 	}
 }

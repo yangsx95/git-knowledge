@@ -20,6 +20,7 @@ func initDao(b *App) *Dao {
 	return &d
 }
 
+// Api 组件注册对象
 type Api struct {
 	LoginApi v1.LoginApi
 }
@@ -32,6 +33,7 @@ func initApi(b *App) *Api {
 	return &a
 }
 
+// initRouter 路由注册
 func (a *App) initRouter() {
 	r := a.echo
 	api := a.Api
