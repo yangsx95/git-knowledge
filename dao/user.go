@@ -3,6 +3,7 @@ package dao
 import (
 	"git-knowledge/dao/model"
 	"git-knowledge/db"
+	"git-knowledge/util"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -23,7 +24,7 @@ func NewUserDao(resource *db.Resource) UserDao {
 }
 
 func (u *userDaoImpl) InsertUser(user model.User) error {
-	context, cancel := initContext()
+	context, cancel := util.GetContextWithTimeout60Second()
 	defer cancel()
 	_, err := u.collection.InsertOne(context, user)
 	if err != nil {

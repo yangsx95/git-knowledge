@@ -9,13 +9,15 @@ import (
 // Dao 应用程序组件容器，所有Dao组件都需要注册到该文件中
 // 注意，要按照顺序依次注入
 type Dao struct {
-	UserDao dao.UserDao
+	UserDao           dao.UserDao
+	ThirdPartOAuthDao dao.OAuthDao
 }
 
 func initDao(b *App) *Dao {
 	d := Dao{}
 
 	d.UserDao = dao.NewUserDao(b.db)
+	d.ThirdPartOAuthDao = dao.NewThirdPartOAuthDao(b.db)
 
 	return &d
 }
@@ -28,7 +30,7 @@ type Api struct {
 func initApi(b *App) *Api {
 	a := Api{}
 
-	a.LoginApi = v1.NewLoginApi(b.Dao.UserDao)
+	a.LoginApi = v1.NewLoginApi(b.Dao.UserDao, b.Dao.ThirdPartOAuthDao)
 
 	return &a
 }
@@ -39,4 +41,6 @@ func (a *App) initRouter() {
 	api := a.Api
 
 	r.POST("/registry", a.Handler(api.LoginApi.Registry))
+	r.GET("/oauth/authorize_url", a.Handler(api.LoginApi.GetOAuthAuthorizeUrl))
+	r.POST("/oauth/login", a.Handler(api.LoginApi.OAuthLogin))
 }

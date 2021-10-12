@@ -12,8 +12,12 @@ const (
 	CodeMethodErr    = 405
 	CodeValidateErr  = 410
 
+	CodeGithubAuthFail = 450
+
 	CodeInnerError  Code = 500
 	CodeServiceFail Code = 501
+
+	CodeGithubConnectionErr Code = 571
 )
 
 // String 错误码基本描述
@@ -31,10 +35,16 @@ func (c Code) String() string {
 	case CodeMethodErr:
 		return "不支持的请求方法"
 
+	case CodeGithubAuthFail:
+		return "Github登录授权失败"
+
 	case CodeServiceFail:
 		return "交易出错"
 	case CodeInnerError:
 		return "服务器内部错误"
+
+	case CodeGithubConnectionErr:
+		return "与github服务器建立连接失败"
 	}
 	return ""
 }

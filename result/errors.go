@@ -2,7 +2,7 @@ package result
 
 import "fmt"
 
-// ServiceError 系统服务错误
+// ServiceError 服务错误
 type ServiceError struct {
 	Code   Code   // 错误编码
 	Detail string // 错误详细信息

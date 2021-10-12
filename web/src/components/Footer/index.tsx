@@ -6,7 +6,7 @@ export default () => {
   const intl = useIntl();
   const defaultMessage = intl.formatMessage({
     id: 'app.copyright.produced',
-    defaultMessage: '蚂蚁集团体验技术部出品',
+    defaultMessage: '杨顺翔倾情奉献，欢迎访问我的小站',
   });
 
   const currentYear = new Date().getFullYear();
@@ -16,21 +16,21 @@ export default () => {
       copyright={`${currentYear} ${defaultMessage}`}
       links={[
         {
-          key: 'Ant Design Pro',
-          title: 'Ant Design Pro',
+          key: 'Git Knowledge',
+          title: 'Git Knowledge',
           href: 'https://pro.ant.design',
           blankTarget: true,
         },
         {
           key: 'github',
           title: <GithubOutlined />,
-          href: 'https://github.com/ant-design/ant-design-pro',
+          href: 'https://github.com/yangsx95/git-knowledge',
           blankTarget: true,
         },
         {
-          key: 'Ant Design',
-          title: 'Ant Design',
-          href: 'https://ant.design',
+          key: 'Author',
+          title: 'Author',
+          href: 'http://yangsx95.com',
           blankTarget: true,
         },
       ]}

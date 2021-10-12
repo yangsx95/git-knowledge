@@ -4,6 +4,7 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"net/url"
 	"strings"
 )
 
@@ -34,6 +35,16 @@ func (ehf *ErrorHandler) Handler(err error, translator *ut.Translator) *Response
 			errList = append(errList, e.Translate(*translator))
 		}
 		response = Build(CodeValidateErr).WithDetail(strings.Join(errList, "|"))
+
+	case *url.Error:
+		e := err.(*url.Error)
+		u, _ := url.Parse(e.URL)
+		switch u.Host {
+		case "github.com":
+			response = Build(CodeGithubConnectionErr).WithDetail(e.Error())
+		default:
+			response = Build(CodeInnerError).WithDetail(err.Error())
+		}
 	case *echo.HTTPError:
 		err := err.(*echo.HTTPError)
 		switch err.Code {

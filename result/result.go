@@ -2,10 +2,10 @@ package result
 
 // Response 响应体
 type Response struct {
-	Code   int         `json:"code"`   // 错误码
-	Msg    string      `json:"msg"`    // 错误描述
-	Detail string      `json:"detail"` // 详细描述
-	Data   interface{} `json:"data"`   // 返回数据
+	Code   int         `json:"code" xml:"code"`     // 错误码
+	Msg    string      `json:"msg" xml:"msg"`       // 错误描述
+	Detail string      `json:"detail" xml:"detail"` // 详细描述
+	Data   interface{} `json:"data" xml:"data"`     // 返回数据
 }
 
 // WithDetail 追加描述信息

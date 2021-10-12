@@ -7,8 +7,3 @@ func IsErrType(t reflect.Type) bool {
 	errorInterface := reflect.TypeOf((*error)(nil)).Elem()
 	return t.Implements(errorInterface)
 }
-
-// MethodCall 函数调用
-func MethodCall() {
-
-}

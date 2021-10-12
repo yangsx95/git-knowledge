@@ -14,7 +14,6 @@ func (a *App) Handler(apiMethod interface{}) func(context echo.Context) error {
 	mT := reflect.TypeOf(apiMethod)
 	mV := reflect.ValueOf(apiMethod)
 
-	// 构造gin路由处理函数
 	return func(context echo.Context) error {
 		translator, ok := a.ut.GetTranslator("zh")
 		if !ok {
@@ -33,12 +32,12 @@ func (a *App) Handler(apiMethod interface{}) func(context echo.Context) error {
 				structV := reflect.New(pT.Elem())
 				pV.Elem().Set(structV)
 			}
+			reqVal := pV.Elem()
 			// 将请求信息绑定到参数对象中
-			err := context.Bind(pV.Interface())
+			err := context.Bind(reqVal.Interface())
 			if err != nil {
 				return err
 			}
-			reqVal := pV.Elem()
 			// 校验结构体
 			err = context.Validate(reqVal.Interface())
 			if err != nil {
@@ -61,6 +60,8 @@ func (a *App) Handler(apiMethod interface{}) func(context echo.Context) error {
 			err = context.JSON(200, response)
 		case "application/xml":
 			err = context.XML(200, response)
+		default:
+			err = context.JSON(200, response)
 		}
 		return err
 	}
@@ -137,7 +138,7 @@ func generateResult(handler *result.ErrorHandler, translator *ut.Translator, rts
 		return result.Build(result.CodeOk).WithData(rv)
 	} else { // 双返回值
 		rv0 := rts[0].Interface()
-		rv1 := rts[1].Interface().(error)
+		rv1 := rts[1].Interface()
 		if rv1 != nil {
 			return handler.Handler(rv1.(error), translator)
 		}

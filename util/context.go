@@ -1,10 +1,10 @@
-package dao
+package util
 
 import (
 	"context"
 	"time"
 )
 
-func initContext() (context.Context, context.CancelFunc) {
+func GetContextWithTimeout60Second() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 60*time.Second)
 }
