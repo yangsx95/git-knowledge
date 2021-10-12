@@ -57,3 +57,7 @@
   - 通过导出的函数提供打印日志的功能，比如：`logger.Info()`
 - `helper` 帮助
   - `util` 工具函数
+
+## 相关资源
+
+- [echo 中文](http://echo.topgoer.com)

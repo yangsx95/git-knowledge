@@ -7,6 +7,7 @@ type Code uint
 const (
 	CodeOk Code = 200
 
+	CodeNotFoundErr = 404
 	CodeValidateErr = 410
 	CodeReqParamErr = 411
 
@@ -20,6 +21,8 @@ func (c Code) String() string {
 	case CodeOk:
 		return "请求成功"
 
+	case CodeNotFoundErr:
+		return "接口不存在"
 	case CodeValidateErr:
 		return "校验出错"
 	case CodeReqParamErr:

@@ -14,7 +14,7 @@ type State interface {
 type StateNew struct{}
 
 func (s *StateNew) Start(a *App) {
-	err := a.engine.Run(":8080")
+	err := a.echo.Start(":8080")
 	if err != nil {
 		logger.Fatal("启动服务出现错误 %s", err)
 	}

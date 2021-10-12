@@ -3,19 +3,19 @@ package app
 import (
 	"git-knowledge/result"
 	"git-knowledge/util"
-	"github.com/gin-gonic/gin"
 	ut "github.com/go-playground/universal-translator"
+	"github.com/labstack/echo/v4"
 	"reflect"
 )
 
-func (a *App) Handler(apiMethod interface{}) func(context *gin.Context) {
+func (a *App) Handler(apiMethod interface{}) func(context echo.Context) error {
 	validateHandlerMethod(apiMethod)
 
 	mT := reflect.TypeOf(apiMethod)
 	mV := reflect.ValueOf(apiMethod)
 
 	// 构造gin路由处理函数
-	return func(context *gin.Context) {
+	return func(context echo.Context) error {
 		translator, ok := a.ut.GetTranslator("zh")
 		if !ok {
 			translator, _ = a.ut.GetTranslator("zh")
@@ -34,22 +34,26 @@ func (a *App) Handler(apiMethod interface{}) func(context *gin.Context) {
 				pV.Elem().Set(structV)
 			}
 			// 将请求信息绑定到参数对象中
-			err := context.ShouldBind(pV.Interface())
+			err := context.Bind(pV.Interface())
 			if err != nil {
-				context.JSON(200, a.errorHandler.Handler(err, &translator))
-				return
+				return err
 			}
-			pVs = append(pVs, pV.Elem())
+			reqVal := pV.Elem()
+			// 校验结构体
+			err = context.Validate(reqVal.Interface())
+			if err != nil {
+				return err
+			}
+			pVs = append(pVs, reqVal)
 		}
 
 		// 调用函数/方法
 		rts := mV.Call(pVs)
 
-		// 根据函数返回值生成结果
+		// 根据函数返回值生成结果，并返回响应体
 		response := generateResult(a.errorHandler, &translator, rts)
-
-		// 设置http响应体
-		context.JSON(200, response)
+		err := context.JSON(200, response)
+		return err
 	}
 }
 
@@ -109,7 +113,7 @@ func validateHandlerMethod(apiMethod interface{}) {
 
 }
 
-func generateResult(handler *ErrorHandler, translator *ut.Translator, rts []reflect.Value) *result.Response {
+func generateResult(handler *result.ErrorHandler, translator *ut.Translator, rts []reflect.Value) *result.Response {
 	if len(rts) == 0 { // 无返回值
 		return result.Build(result.CodeOk)
 	}

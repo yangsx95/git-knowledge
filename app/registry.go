@@ -4,7 +4,6 @@ package app
 import (
 	v1 "git-knowledge/api/v1"
 	"git-knowledge/dao"
-	"github.com/gin-gonic/gin"
 )
 
 // Dao 应用程序组件容器，所有Dao组件都需要注册到该文件中
@@ -33,6 +32,9 @@ func initApi(b *App) *Api {
 	return &a
 }
 
-func (a *App) initRouter(r gin.RouterGroup, b *Api) {
-	r.POST("/registry", a.Handler(b.LoginApi.Registry))
+func (a *App) initRouter() {
+	r := a.echo
+	api := a.Api
+
+	r.POST("/registry", a.Handler(api.LoginApi.Registry))
 }

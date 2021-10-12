@@ -22,7 +22,4 @@ func (t *TApi) tMethodWithParam(req *TReq) {
 }
 
 func TestHandler(t *testing.T) {
-	tApi := TApi{}
-	Handler(tApi.tMethod)
-	Handler(tApi.tMethodWithParam)
 }
