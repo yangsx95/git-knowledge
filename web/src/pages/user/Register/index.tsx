@@ -7,11 +7,11 @@ import {
 import {Alert, message} from 'antd';
 import React, {useState} from 'react';
 import ProForm, {ProFormText} from '@ant-design/pro-form';
-import {useIntl, history, FormattedMessage, SelectLang, useModel, Link} from 'umi';
+import {useIntl, history, FormattedMessage, SelectLang, Link} from 'umi';
 import Footer from '@/components/Footer';
-import {login} from '@/services/ant-design-pro/api';
 
 import styles from './index.less';
+import {register} from "@/services/user";
 
 const LoginMessage: React.FC<{
   content: string;
@@ -27,35 +27,24 @@ const LoginMessage: React.FC<{
 );
 
 const Login: React.FC = () => {
+  // 表单的提交状态
   const [submitting, setSubmitting] = useState(false);
-  const [userLoginState, setUserLoginState] = useState<API.LoginResult>({});
-  const [type] = useState<string>('account');
-  const {initialState, setInitialState} = useModel('@@initialState');
+  const [userRegisterState, setUserRegisterState] = useState<API.RegisterResult>({detail: "", msg: "", code: 200});
 
   const intl = useIntl();
 
-  const fetchUserInfo = async () => {
-    const userInfo = await initialState?.fetchUserInfo?.();
-    if (userInfo) {
-      await setInitialState((s) => ({
-        ...s,
-        currentUser: userInfo,
-      }));
-    }
-  };
-
-  const handleSubmit = async (values: API.LoginParams) => {
-    setSubmitting(true);
+  const handleSubmit = async (values: API.RegisterParams) => {
+    setSubmitting(true); // 设置表单状态为提交中
     try {
-      // 登录
-      const msg = await login({...values, type});
-      if (msg.status === 'ok') {
+      // 发送注册接口
+      const resp = await register(values);
+
+      if (resp.code === 200) {
         const defaultLoginSuccessMessage = intl.formatMessage({
-          id: 'pages.login.success',
-          defaultMessage: '登录成功！',
+          id: 'pages.register.success',
+          defaultMessage: '注册成功！',
         });
         message.success(defaultLoginSuccessMessage);
-        await fetchUserInfo();
         /** 此方法会跳转到 redirect 参数所在的位置 */
         if (!history) return;
         const {query} = history.location;
@@ -64,18 +53,18 @@ const Login: React.FC = () => {
         return;
       }
       // 如果失败去设置用户错误信息
-      setUserLoginState(msg);
+      setUserRegisterState({...resp});
     } catch (error) {
+      console.log(error)
       const defaultLoginFailureMessage = intl.formatMessage({
-        id: 'pages.login.failure',
+        id: 'pages.register.failure',
         defaultMessage: '登录失败，请重试！',
       });
-
       message.error(defaultLoginFailureMessage);
     }
     setSubmitting(false);
   };
-  const {status, type: loginType} = userLoginState;
+  const {code, detail} = userRegisterState;
 
   return (
     <div className={styles.container}>
@@ -112,18 +101,19 @@ const Login: React.FC = () => {
               },
             }}
             onFinish={async (values) => {
-              await handleSubmit(values as API.LoginParams);
+              await handleSubmit(values as API.RegisterParams);
             }}
           >
 
-            {status === 'error' && loginType === 'account' && (
+            {code !== 200 && (
               <LoginMessage
                 content={intl.formatMessage({
-                  id: 'pages.login.accountLogin.errorMessage',
-                  defaultMessage: '账户或密码错误(admin/ant.design)',
+                  id: 'pages.register.errorMessage',
+                  defaultMessage: '注册失败',
                 })}
               />
-            )}
+            ) && console.log(detail)}
+
             <>
               <ProFormText
                 name="userid"
@@ -140,7 +130,7 @@ const Login: React.FC = () => {
                     required: true,
                     message: (
                       <FormattedMessage
-                        id="pages.register.userid.required"
+                        id="pages.register.userid.validate"
                         defaultMessage="用户ID不符合规则，必须是数字和字母!"
                       />
                     ),
@@ -149,7 +139,7 @@ const Login: React.FC = () => {
                 ]}
               />
               <ProFormText
-                name="username"
+                name="nickname"
                 fieldProps={{
                   size: 'large',
                   prefix: <BookOutlined className={styles.prefixIcon}/>,

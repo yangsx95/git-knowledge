@@ -39,8 +39,7 @@ func initApi(b *App) *Api {
 func (a *App) initRouter() {
 	r := a.echo
 	api := a.Api
-
-	r.POST("/registry", a.Handler(api.LoginApi.Registry))
-	r.GET("/oauth/authorize_url", a.Handler(api.LoginApi.GetOAuthAuthorizeUrl))
-	r.POST("/oauth/login", a.Handler(api.LoginApi.OAuthLogin))
+	r.POST("/api/registry", a.Handler(api.LoginApi.Registry))
+	r.GET("/api/oauth/authorize_url", a.Handler(api.LoginApi.GetOAuthAuthorizeUrl))
+	r.POST("/api/oauth/login", a.Handler(api.LoginApi.OAuthLogin))
 }
