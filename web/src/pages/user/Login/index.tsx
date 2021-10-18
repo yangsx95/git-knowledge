@@ -1,24 +1,22 @@
 import {
-  AlipayCircleOutlined,
+  AlipayCircleOutlined, GithubOutlined,
   LockOutlined,
   MobileOutlined,
-  TaobaoCircleOutlined,
-  UserOutlined,
-  WeiboCircleOutlined,
+  UserOutlined, WechatOutlined,
 } from '@ant-design/icons';
-import { Alert, Space, message, Tabs } from 'antd';
-import React, { useState } from 'react';
-import ProForm, { ProFormCaptcha, ProFormCheckbox, ProFormText } from '@ant-design/pro-form';
-import { useIntl, Link, history, FormattedMessage, SelectLang, useModel } from 'umi';
+import {Alert, Space, message, Tabs} from 'antd';
+import React, {useState} from 'react';
+import ProForm, {ProFormCheckbox, ProFormText} from '@ant-design/pro-form';
+import {useIntl, Link, history, FormattedMessage, SelectLang, useModel} from 'umi';
 import Footer from '@/components/Footer';
-import { login } from '@/services/ant-design-pro/api';
-import { getFakeCaptcha } from '@/services/ant-design-pro/login';
 
 import styles from './index.less';
+import type {API} from "@/services/user/typing";
+import {loginWithGitKnowledgeId} from "@/services/user";
 
 const LoginMessage: React.FC<{
   content: string;
-}> = ({ content }) => (
+}> = ({content}) => (
   <Alert
     style={{
       marginBottom: 24,
@@ -31,9 +29,14 @@ const LoginMessage: React.FC<{
 
 const Login: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
-  const [userLoginState, setUserLoginState] = useState<API.LoginResult>({});
+  const [userLoginState, setUserLoginState] = useState<API.LoginWithGitKnowledgeIdResult>({
+    detail: "",
+    msg: "",
+    token: "",
+    code: 0
+  });
   const [type, setType] = useState<string>('account');
-  const { initialState, setInitialState } = useModel('@@initialState');
+  const {initialState, setInitialState} = useModel('@@initialState');
 
   const intl = useIntl();
 
@@ -47,22 +50,27 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (values: API.LoginParams) => {
+  const handleSubmit = async (values: API.LoginWithGitKnowledgeIdParams) => {
     setSubmitting(true);
     try {
       // 登录
-      const msg = await login({ ...values, type });
-      if (msg.status === 'ok') {
+      const msg = await loginWithGitKnowledgeId({...values});
+      if (msg.code === 200) {
+        // 存储token信息
+        localStorage.setItem("Token", msg.token);
+        // 弹出成功提示
         const defaultLoginSuccessMessage = intl.formatMessage({
           id: 'pages.login.success',
           defaultMessage: '登录成功！',
         });
         message.success(defaultLoginSuccessMessage);
+        // 获取用户信息
         await fetchUserInfo();
+
         /** 此方法会跳转到 redirect 参数所在的位置 */
         if (!history) return;
-        const { query } = history.location;
-        const { redirect } = query as { redirect: string };
+        const {query} = history.location;
+        const {redirect} = query as { redirect: string };
         history.push(redirect || '/');
         return;
       }
@@ -78,23 +86,24 @@ const Login: React.FC = () => {
     }
     setSubmitting(false);
   };
-  const { status, type: loginType } = userLoginState;
+
+  const {code} = userLoginState;
 
   return (
     <div className={styles.container}>
       <div className={styles.lang} data-lang>
-        {SelectLang && <SelectLang />}
+        {SelectLang && <SelectLang/>}
       </div>
       <div className={styles.content}>
         <div className={styles.top}>
           <div className={styles.header}>
             <Link to="/">
-              <img alt="logo" className={styles.logo} src="/logo.svg" />
+              <img alt="logo" className={styles.logo} src="/logo.svg"/>
               <span className={styles.title}>Ant Design</span>
             </Link>
           </div>
           <div className={styles.desc}>
-            {intl.formatMessage({ id: 'pages.layouts.userLayout.title' })}
+            {intl.formatMessage({id: 'pages.layouts.userLayout.title'})}
           </div>
         </div>
 
@@ -120,7 +129,7 @@ const Login: React.FC = () => {
               },
             }}
             onFinish={async (values) => {
-              await handleSubmit(values as API.LoginParams);
+              await handleSubmit(values as API.LoginWithGitKnowledgeIdParams);
             }}
           >
             <Tabs activeKey={type} onChange={setType}>
@@ -140,7 +149,7 @@ const Login: React.FC = () => {
               />
             </Tabs>
 
-            {status === 'error' && loginType === 'account' && (
+            {(code === 430 || code == 431) && (
               <LoginMessage
                 content={intl.formatMessage({
                   id: 'pages.login.accountLogin.errorMessage',
@@ -151,13 +160,13 @@ const Login: React.FC = () => {
             {type === 'account' && (
               <>
                 <ProFormText
-                  name="username"
+                  name="userid"
                   fieldProps={{
                     size: 'large',
-                    prefix: <UserOutlined className={styles.prefixIcon} />,
+                    prefix: <UserOutlined className={styles.prefixIcon}/>,
                   }}
                   placeholder={intl.formatMessage({
-                    id: 'pages.login.username.placeholder',
+                    id: 'pages.login.userid.placeholder',
                     defaultMessage: '用户名: admin or user',
                   })}
                   rules={[
@@ -165,7 +174,7 @@ const Login: React.FC = () => {
                       required: true,
                       message: (
                         <FormattedMessage
-                          id="pages.login.username.required"
+                          id="pages.login.userid.required"
                           defaultMessage="请输入用户名!"
                         />
                       ),
@@ -176,7 +185,7 @@ const Login: React.FC = () => {
                   name="password"
                   fieldProps={{
                     size: 'large',
-                    prefix: <LockOutlined className={styles.prefixIcon} />,
+                    prefix: <LockOutlined className={styles.prefixIcon}/>,
                   }}
                   placeholder={intl.formatMessage({
                     id: 'pages.login.password.placeholder',
@@ -197,13 +206,13 @@ const Login: React.FC = () => {
               </>
             )}
 
-            {status === 'error' && loginType === 'mobile' && <LoginMessage content="验证码错误" />}
+            {status === 'error' && type === 'mobile' && <LoginMessage content="验证码错误"/>}
             {type === 'mobile' && (
               <>
                 <ProFormText
                   fieldProps={{
                     size: 'large',
-                    prefix: <MobileOutlined className={styles.prefixIcon} />,
+                    prefix: <MobileOutlined className={styles.prefixIcon}/>,
                   }}
                   name="mobile"
                   placeholder={intl.formatMessage({
@@ -231,52 +240,52 @@ const Login: React.FC = () => {
                     },
                   ]}
                 />
-                <ProFormCaptcha
-                  fieldProps={{
-                    size: 'large',
-                    prefix: <LockOutlined className={styles.prefixIcon} />,
-                  }}
-                  captchaProps={{
-                    size: 'large',
-                  }}
-                  placeholder={intl.formatMessage({
-                    id: 'pages.login.captcha.placeholder',
-                    defaultMessage: '请输入验证码',
-                  })}
-                  captchaTextRender={(timing, count) => {
-                    if (timing) {
-                      return `${count} ${intl.formatMessage({
-                        id: 'pages.getCaptchaSecondText',
-                        defaultMessage: '获取验证码',
-                      })}`;
-                    }
-                    return intl.formatMessage({
-                      id: 'pages.login.phoneLogin.getVerificationCode',
-                      defaultMessage: '获取验证码',
-                    });
-                  }}
-                  name="captcha"
-                  rules={[
-                    {
-                      required: true,
-                      message: (
-                        <FormattedMessage
-                          id="pages.login.captcha.required"
-                          defaultMessage="请输入验证码！"
-                        />
-                      ),
-                    },
-                  ]}
-                  onGetCaptcha={async (phone) => {
-                    const result = await getFakeCaptcha({
-                      phone,
-                    });
-                    if (result === false) {
-                      return;
-                    }
-                    message.success('获取验证码成功！验证码为：1234');
-                  }}
-                />
+                {/*<ProFormCaptcha*/}
+                {/*  fieldProps={{*/}
+                {/*    size: 'large',*/}
+                {/*    prefix: <LockOutlined className={styles.prefixIcon}/>,*/}
+                {/*  }}*/}
+                {/*  captchaProps={{*/}
+                {/*    size: 'large',*/}
+                {/*  }}*/}
+                {/*  placeholder={intl.formatMessage({*/}
+                {/*    id: 'pages.login.captcha.placeholder',*/}
+                {/*    defaultMessage: '请输入验证码',*/}
+                {/*  })}*/}
+                {/*  captchaTextRender={(timing, count) => {*/}
+                {/*    if (timing) {*/}
+                {/*      return `${count} ${intl.formatMessage({*/}
+                {/*        id: 'pages.getCaptchaSecondText',*/}
+                {/*        defaultMessage: '获取验证码',*/}
+                {/*      })}`;*/}
+                {/*    }*/}
+                {/*    return intl.formatMessage({*/}
+                {/*      id: 'pages.login.phoneLogin.getVerificationCode',*/}
+                {/*      defaultMessage: '获取验证码',*/}
+                {/*    });*/}
+                {/*  }}*/}
+                {/*  name="captcha"*/}
+                {/*  rules={[*/}
+                {/*    {*/}
+                {/*      required: true,*/}
+                {/*      message: (*/}
+                {/*        <FormattedMessage*/}
+                {/*          id="pages.login.captcha.required"*/}
+                {/*          defaultMessage="请输入验证码！"*/}
+                {/*        />*/}
+                {/*      ),*/}
+                {/*    },*/}
+                {/*  ]}*/}
+                {/*  onGetCaptcha={async (phone) => {*/}
+                {/*    const result = await getFakeCaptcha({*/}
+                {/*      phone,*/}
+                {/*    });*/}
+                {/*    if (result === false) {*/}
+                {/*      return;*/}
+                {/*    }*/}
+                {/*    message.success('获取验证码成功！验证码为：1234');*/}
+                {/*  }}*/}
+                {/*/>*/}
               </>
             )}
             <div
@@ -285,26 +294,26 @@ const Login: React.FC = () => {
               }}
             >
               <ProFormCheckbox noStyle name="autoLogin">
-                <FormattedMessage id="pages.login.rememberMe" defaultMessage="自动登录" />
+                <FormattedMessage id="pages.login.rememberMe" defaultMessage="自动登录"/>
               </ProFormCheckbox>
               <a
                 style={{
                   float: 'right',
                 }}
               >
-                <FormattedMessage id="pages.login.forgotPassword" defaultMessage="忘记密码" />
+                <FormattedMessage id="pages.login.forgotPassword" defaultMessage="忘记密码"/>
               </a>
             </div>
           </ProForm>
           <Space className={styles.other}>
-            <FormattedMessage id="pages.login.loginWith" defaultMessage="其他登录方式" />
-            <AlipayCircleOutlined className={styles.icon} />
-            <TaobaoCircleOutlined className={styles.icon} />
-            <WeiboCircleOutlined className={styles.icon} />
+            <FormattedMessage id="pages.login.loginWith" defaultMessage="其他登录方式"/>
+            <GithubOutlined className={styles.icon}/>
+            <WechatOutlined className={styles.icon}/>
+            <AlipayCircleOutlined className={styles.icon}/>
           </Space>
         </div>
       </div>
-      <Footer />
+      <Footer/>
     </div>
   );
 };

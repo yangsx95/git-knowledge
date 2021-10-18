@@ -12,6 +12,8 @@ const (
 	CodeMethodErr    = 405
 	CodeValidateErr  = 410
 
+	CodeUserNotExists               = 430
+	CodeWrongPassword               = 431
 	CodeRegisterUserIdAlreadyExists = 440
 	CodeRegisterEmailAlreadyExists  = 441
 	CodeGithubAuthFail              = 450
@@ -36,7 +38,10 @@ func (c Code) String() string {
 		return "请求参数有误"
 	case CodeMethodErr:
 		return "不支持的请求方法"
-
+	case CodeUserNotExists:
+		return "用户不存在"
+	case CodeWrongPassword:
+		return "密码错误"
 	case CodeRegisterUserIdAlreadyExists:
 		return "用户Id已经存在"
 	case CodeRegisterEmailAlreadyExists:

@@ -4,8 +4,10 @@ import (
 	"git-knowledge/api/v1/vo"
 	"git-knowledge/dao"
 	"git-knowledge/dao/model"
+	"git-knowledge/middlewares"
 	"git-knowledge/result"
 	"git-knowledge/util"
+	"github.com/dgrijalva/jwt-go"
 	"net/url"
 	"os"
 	"strconv"
@@ -17,8 +19,8 @@ type LoginApi interface {
 	// Registry 注册用户
 	Registry(request *vo.RegistryRequest) error
 
-	// Login 登录
-	Login(request *vo.LoginRequest) error
+	// LoginWithGitKnowledgeId 登录
+	LoginWithGitKnowledgeId(request *vo.LoginWithGitKnowledgeIdRequest) (*vo.LoginWithGitKnowledgeIdResponse, error)
 
 	// GetOAuthAuthorizeUrl 获取第三方oauth登录身份认证url，支持多种类型，比如github
 	GetOAuthAuthorizeUrl(request *vo.GetOAuthAuthorizeUrlRequest) *vo.GetOAuthAuthorizeUrlResponse
@@ -66,8 +68,32 @@ func (l *LoginApiImpl) Registry(request *vo.RegistryRequest) error {
 	return err
 }
 
-func (l *LoginApiImpl) Login(request *vo.LoginRequest) error {
-	panic("")
+func (l *LoginApiImpl) LoginWithGitKnowledgeId(request *vo.LoginWithGitKnowledgeIdRequest) (*vo.LoginWithGitKnowledgeIdResponse, error) {
+	err, user := l.userDao.FindUserByUserid(request.Userid)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, result.ErrorOf(result.CodeUserNotExists)
+	}
+	if user.Password != request.Password {
+		return nil, result.ErrorOf(result.CodeWrongPassword)
+	}
+	// 登录成功，生成jwt
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &middlewares.JWTClaims{
+		Userid: user.Userid,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(), // 有效期为72小时
+		},
+	})
+	// 生成token字符串
+	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		return nil, err
+	}
+	return &vo.LoginWithGitKnowledgeIdResponse{
+		Token: t,
+	}, nil
 }
 
 func (l *LoginApiImpl) GetOAuthAuthorizeUrl(request *vo.GetOAuthAuthorizeUrlRequest) *vo.GetOAuthAuthorizeUrlResponse {

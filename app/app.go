@@ -109,7 +109,6 @@ func (a *App) initEchoAndMiddleware() {
 	a.echo.Validator = NewEchoValidator(a.validator)
 	// 中间件
 	a.echo.Use(middlewares.LoggerMiddleware(logger.GetLogger()))
-	a.echo.Use(middlewares.SessionMiddleware())
 }
 
 func (a *App) initTranslator() {

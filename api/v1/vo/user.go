@@ -27,7 +27,11 @@ type GetOAuthAuthorizeUrlResponse struct {
 type OAuthLoginResponse struct {
 }
 
-type LoginRequest struct {
-	userid   string
-	password string
+type LoginWithGitKnowledgeIdRequest struct {
+	Userid   string `json:"userid" xml:"userid" validate:"required"`
+	Password string `json:"password" xml:"password" validate:"required"`
+}
+
+type LoginWithGitKnowledgeIdResponse struct {
+	Token string `json:"token" xml:"token"`
 }

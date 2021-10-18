@@ -4,6 +4,8 @@ package app
 import (
 	v1 "git-knowledge/api/v1"
 	"git-knowledge/dao"
+	"git-knowledge/middlewares"
+	"os"
 )
 
 // Dao 应用程序组件容器，所有Dao组件都需要注册到该文件中
@@ -41,5 +43,8 @@ func (a *App) initRouter() {
 	api := a.Api
 	r.POST("/api/registry", a.Handler(api.LoginApi.Registry))
 	r.GET("/api/oauth/authorize_url", a.Handler(api.LoginApi.GetOAuthAuthorizeUrl))
+	r.POST("/api/login/userid", a.Handler(api.LoginApi.LoginWithGitKnowledgeId))
 	r.POST("/api/oauth/login", a.Handler(api.LoginApi.OAuthLogin))
+
+	r.Group("/api/userinfo", middlewares.JWTMiddleware(os.Getenv("JWT_SECRET")))
 }

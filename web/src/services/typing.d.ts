@@ -1,16 +1,8 @@
-declare namespace API {
-  type RegisterParams = {
-    userid: string;
-    password: string;
-    nickname: string;
-    email: string;
-  };
+export class CommonRequest {
+}
 
-  type RegisterResult = {
-    code: number;
-    msg: string;
-    detail: string;
-  };
-
-
+export class CommonResponse {
+  code: number
+  msg: string
+  detail: string;
 }
