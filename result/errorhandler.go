@@ -1,6 +1,7 @@
 package result
 
 import (
+	"git-knowledge/logger"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -58,6 +59,7 @@ func (ehf *ErrorHandler) Handler(err error, translator *ut.Translator) *Response
 			response = Build(CodeInnerError).WithDetail(err.Error())
 		}
 	default: // 如果是未知异常，则抛出系统内部错误
+		logger.Error("%v", err)
 		response = Build(CodeInnerError).WithDetail(err.Error())
 	}
 	return response

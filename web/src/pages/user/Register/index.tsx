@@ -51,6 +51,16 @@ const Login: React.FC = () => {
         const {redirect} = query as { redirect: string };
         history.push(redirect || '/');
         return;
+      } else if (resp.code == 440) { // 用户id已存在
+        message.error(intl.formatMessage({
+          id: 'pages.register.userid.exists',
+          defaultMessage: '用户ID已经存在',
+        }));
+      } else if (resp.code == 441) { // 用户邮箱已被注册
+        message.error(intl.formatMessage({
+          id: 'pages.register.email.exists',
+          defaultMessage: '邮箱地址已经存在',
+        }));
       }
       // 如果失败去设置用户错误信息
       setUserRegisterState({...resp});
@@ -58,7 +68,7 @@ const Login: React.FC = () => {
       console.log(error)
       const defaultLoginFailureMessage = intl.formatMessage({
         id: 'pages.register.failure',
-        defaultMessage: '登录失败，请重试！',
+        defaultMessage: '注册失败，请重试！',
       });
       message.error(defaultLoginFailureMessage);
     }

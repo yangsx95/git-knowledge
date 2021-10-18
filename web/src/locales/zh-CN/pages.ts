@@ -31,6 +31,8 @@ export default {
   'pages.register.email.required' : '邮箱地址不合法',
   'pages.register.submit': '注册',
   'pages.register.errorMessage': '注册失败',
+  'pages.register.userid.exists': '用户ID已经存在',
+  'pages.register.email.exists': '邮箱地址已经被注册',
   'pages.welcome.advancedComponent': '高级表格',
   'pages.welcome.link': '欢迎使用',
   'pages.welcome.advancedLayout': '高级布局',

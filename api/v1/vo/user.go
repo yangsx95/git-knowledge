@@ -1,4 +1,4 @@
-package v1
+package vo
 
 type RegistryRequest struct {
 	Userid    string `json:"userid" validate:"required"`
@@ -18,4 +18,16 @@ type OAuthLoginRequest struct {
 	Code        string `json:"code" xml:"code"`
 	State       string `json:"state" xml:"state"`
 	RedirectUrl string `json:"redirect_url" xml:"redirect_url"`
+}
+
+type GetOAuthAuthorizeUrlResponse struct {
+	Url string `json:"url" xml:"url"`
+}
+
+type OAuthLoginResponse struct {
+}
+
+type LoginRequest struct {
+	userid   string
+	password string
 }

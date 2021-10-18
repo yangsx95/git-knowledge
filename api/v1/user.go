@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"git-knowledge/api/v1/vo"
 	"git-knowledge/dao"
 	"git-knowledge/dao/model"
 	"git-knowledge/result"
@@ -14,13 +15,16 @@ import (
 type LoginApi interface {
 
 	// Registry 注册用户
-	Registry(request *RegistryRequest) error
+	Registry(request *vo.RegistryRequest) error
+
+	// Login 登录
+	Login(request *vo.LoginRequest) error
 
 	// GetOAuthAuthorizeUrl 获取第三方oauth登录身份认证url，支持多种类型，比如github
-	GetOAuthAuthorizeUrl(request *GetOAuthAuthorizeUrlRequest) *GetOAuthAuthorizeUrlResponse
+	GetOAuthAuthorizeUrl(request *vo.GetOAuthAuthorizeUrlRequest) *vo.GetOAuthAuthorizeUrlResponse
 
 	// OAuthLogin 用户授权成功后，调用此接口进行认证登录
-	OAuthLogin(request *OAuthLoginRequest) error
+	OAuthLogin(request *vo.OAuthLoginRequest) error
 }
 
 type LoginApiImpl struct {
@@ -32,8 +36,24 @@ func NewLoginApi(userDao dao.UserDao, oAuthDao dao.OAuthDao) LoginApi {
 	return &LoginApiImpl{userDao: userDao, oAuthDao: oAuthDao}
 }
 
-func (l *LoginApiImpl) Registry(request *RegistryRequest) error {
-	err := l.userDao.InsertUser(model.User{
+func (l *LoginApiImpl) Registry(request *vo.RegistryRequest) error {
+	// 判断邮箱以及用户id是否存在
+	err, user := l.userDao.FindUserByUserid(request.Userid)
+	if err != nil {
+		return err
+	}
+	if user != nil {
+		return result.ErrorOf(result.CodeRegisterUserIdAlreadyExists)
+	}
+	err, user = l.userDao.FindUserByEmail(request.Email)
+	if err != nil {
+		return err
+	}
+	if user != nil {
+		return result.ErrorOf(result.CodeRegisterEmailAlreadyExists)
+	}
+
+	err = l.userDao.InsertUser(model.User{
 		Userid:    request.Userid,
 		Password:  request.Password,
 		Nickname:  request.Nickname,
@@ -46,7 +66,11 @@ func (l *LoginApiImpl) Registry(request *RegistryRequest) error {
 	return err
 }
 
-func (l *LoginApiImpl) GetOAuthAuthorizeUrl(request *GetOAuthAuthorizeUrlRequest) *GetOAuthAuthorizeUrlResponse {
+func (l *LoginApiImpl) Login(request *vo.LoginRequest) error {
+	panic("")
+}
+
+func (l *LoginApiImpl) GetOAuthAuthorizeUrl(request *vo.GetOAuthAuthorizeUrlRequest) *vo.GetOAuthAuthorizeUrlResponse {
 	urlResult := ""
 	switch request.Type {
 	case "github":
@@ -64,12 +88,12 @@ func (l *LoginApiImpl) GetOAuthAuthorizeUrl(request *GetOAuthAuthorizeUrlRequest
 		u.RawQuery = query.Encode()
 		urlResult = u.String()
 	}
-	return &GetOAuthAuthorizeUrlResponse{
+	return &vo.GetOAuthAuthorizeUrlResponse{
 		Url: urlResult,
 	}
 }
 
-func (l *LoginApiImpl) OAuthLogin(request *OAuthLoginRequest) error {
+func (l *LoginApiImpl) OAuthLogin(request *vo.OAuthLoginRequest) error {
 	switch request.Type {
 	case "github":
 		// 获取accessToken

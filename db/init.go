@@ -3,6 +3,8 @@ package db
 import (
 	"context"
 	"fmt"
+	"git-knowledge/util"
+	"github.com/globalsign/mgo/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
@@ -42,5 +44,29 @@ func NewResource(host, port, database, username, password string) (*Resource, er
 		return nil, err
 	}
 
-	return &Resource{DB: mongoClient.Database(database)}, nil
+	appDatabase := mongoClient.Database(database)
+	initIndex(appDatabase)
+
+	return &Resource{DB: appDatabase}, nil
+}
+
+func initIndex(client *mongo.Database) {
+	ctx, cancel := util.GetContextWithTimeout60Second()
+	defer cancel()
+	one, err := client.Collection("user").Indexes().CreateMany(ctx, []mongo.IndexModel{{
+		Keys: bson.M{
+			"userid": 1,
+		},
+		Options: options.Index().SetUnique(true),
+	}, {
+		Keys: bson.M{
+			"email": 1,
+		},
+		Options: options.Index().SetUnique(true),
+	}})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(one)
 }
