@@ -3,11 +3,11 @@ module git-knowledge
 go 1.16
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/universal-translator v0.17.0
 	github.com/go-playground/validator/v10 v10.4.1
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/go-github/v39 v39.1.0
 	github.com/joho/godotenv v1.4.0
 	github.com/kidstuff/mongostore v0.0.0-20181113001930-e650cd85ee4b

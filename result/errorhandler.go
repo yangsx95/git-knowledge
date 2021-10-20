@@ -50,12 +50,19 @@ func (ehf *ErrorHandler) Handler(err error, translator *ut.Translator) *Response
 		err := err.(*echo.HTTPError)
 		switch err.Code {
 		case 400:
-			response = Build(CodeParseBodyErr)
+			if err.Message == "missing or malformed jwt" {
+				response = Build(CodeAuthErr)
+			} else {
+				response = Build(CodeParseBodyErr)
+			}
+		case 401:
+			response = Build(CodeAuthErr)
 		case 404:
 			response = Build(CodeNotFoundErr)
 		case 405:
 			response = Build(CodeMethodErr)
 		default:
+			logger.Error("%v", err)
 			response = Build(CodeInnerError).WithDetail(err.Error())
 		}
 	default: // 如果是未知异常，则抛出系统内部错误

@@ -30,6 +30,16 @@ func (a *App) Handler(apiMethod interface{}) func(context echo.Context) error {
 			// 如果是指针，则需要构造struct，并指向该指针
 			if pT.Kind() == reflect.Ptr {
 				structV := reflect.New(pT.Elem())
+				// 填充登录信息
+				if context.Get("_userid") != "" {
+					// FieldByName 如果没有找到对应的字段的Value将会返回Zero零值
+					field := structV.Elem().FieldByName("LoginInfo")
+					// 判断字段Value是否是零值，也就是判断字段是否存在
+					if field.IsValid() {
+						// 设置字段内容
+						field.FieldByName("Userid").Set(reflect.ValueOf(context.Get("_userid")))
+					}
+				}
 				pV.Elem().Set(structV)
 			}
 			reqVal := pV.Elem()

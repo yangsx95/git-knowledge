@@ -12,6 +12,7 @@ import Footer from '@/components/Footer';
 
 import styles from './index.less';
 import {register} from "@/services/user";
+import type {API} from "@/services/user/typing";
 
 const LoginMessage: React.FC<{
   content: string;
@@ -29,7 +30,12 @@ const LoginMessage: React.FC<{
 const Login: React.FC = () => {
   // 表单的提交状态
   const [submitting, setSubmitting] = useState(false);
-  const [userRegisterState, setUserRegisterState] = useState<API.RegisterResult>({detail: "", msg: "", code: 200});
+  const [userRegisterState, setUserRegisterState] = useState<API.RegisterResult>({
+    code: 0,
+    data: undefined,
+    detail: "",
+    msg: ""
+  });
 
   const intl = useIntl();
 

@@ -1,8 +1,10 @@
 import {
-  AlipayCircleOutlined, GithubOutlined,
+  AlipayCircleOutlined,
+  GithubOutlined,
   LockOutlined,
   MobileOutlined,
-  UserOutlined, WechatOutlined,
+  UserOutlined,
+  WechatOutlined,
 } from '@ant-design/icons';
 import {Alert, Space, message, Tabs} from 'antd';
 import React, {useState} from 'react';
@@ -12,7 +14,7 @@ import Footer from '@/components/Footer';
 
 import styles from './index.less';
 import type {API} from "@/services/user/typing";
-import {loginWithGitKnowledgeId} from "@/services/user";
+import {login} from "@/services/user";
 
 const LoginMessage: React.FC<{
   content: string;
@@ -29,10 +31,12 @@ const LoginMessage: React.FC<{
 
 const Login: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
-  const [userLoginState, setUserLoginState] = useState<API.LoginWithGitKnowledgeIdResult>({
+  const [userLoginState, setUserLoginState] = useState<API.LoginResult>({
+    data: {
+      token: ""
+    },
     detail: "",
     msg: "",
-    token: "",
     code: 0
   });
   const [type, setType] = useState<string>('account');
@@ -50,14 +54,14 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (values: API.LoginWithGitKnowledgeIdParams) => {
+  const handleSubmit = async (values: API.LoginParams) => {
     setSubmitting(true);
     try {
       // 登录
-      const msg = await loginWithGitKnowledgeId({...values});
+      const msg = await login({...values});
       if (msg.code === 200) {
         // 存储token信息
-        localStorage.setItem("Token", msg.token);
+        localStorage.setItem("Token", msg.data.token);
         // 弹出成功提示
         const defaultLoginSuccessMessage = intl.formatMessage({
           id: 'pages.login.success',
@@ -76,15 +80,9 @@ const Login: React.FC = () => {
       }
       // 如果失败去设置用户错误信息
       setUserLoginState(msg);
-    } catch (error) {
-      const defaultLoginFailureMessage = intl.formatMessage({
-        id: 'pages.login.failure',
-        defaultMessage: '登录失败，请重试！',
-      });
-
-      message.error(defaultLoginFailureMessage);
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const {code} = userLoginState;
@@ -129,7 +127,7 @@ const Login: React.FC = () => {
               },
             }}
             onFinish={async (values) => {
-              await handleSubmit(values as API.LoginWithGitKnowledgeIdParams);
+              await handleSubmit(values as API.LoginParams);
             }}
           >
             <Tabs activeKey={type} onChange={setType}>

@@ -11,6 +11,7 @@ const (
 	CodeNotFoundErr  = 404
 	CodeMethodErr    = 405
 	CodeValidateErr  = 410
+	CodeAuthErr      = 420
 
 	CodeUserNotExists               = 430
 	CodeWrongPassword               = 431
@@ -36,6 +37,8 @@ func (c Code) String() string {
 		return "接口不存在"
 	case CodeValidateErr:
 		return "请求参数有误"
+	case CodeAuthErr:
+		return "认证失败，你没有权限访问"
 	case CodeMethodErr:
 		return "不支持的请求方法"
 	case CodeUserNotExists:
