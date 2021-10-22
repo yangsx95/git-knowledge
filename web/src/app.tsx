@@ -10,7 +10,6 @@ import type {API} from "@/services/user/typing";
 import {message} from 'antd';
 import type {RequestConfig} from "@@/plugin-request/request";
 import {ErrorShowType} from "@@/plugin-request/request";
-import type {ResponseError} from "umi-request";
 
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -99,7 +98,7 @@ export const request: RequestConfig = {
   },
   errorConfig: {
     // 当后端返回的数据类型不符合umi定义的接口规范时，使用adaptor进行适配
-    adaptor: resData => {
+    adaptor: (resData) => {
       return {
         ...resData,
         // 交易是否成功
@@ -108,25 +107,13 @@ export const request: RequestConfig = {
         data: resData.data,
         // 交易失败的错误码
         errorCode: resData.code,
-        // 交易错误的信息
-        errorMessage: resData.msg,
+        // 交易错误的信息, 这里可以通过adaptor的context对象或者resData对象获取状态码
+        // 如果http状态码为200 那么resData.status字段不存在，反之存在
+        errorMessage: resData.msg ? resData.msg : "网络通讯失败",
         // 错误的显示类型
         // 0 silent; 1 message.warn; 2 message.error; 4 notification; 9 page redirect
         // 0 无错误提示  1 警告信息     3 错误信息        4 通知           9 页面跳转
         showType: ErrorShowType.ERROR_MESSAGE
-      }
-    }
-  },
-  // 处理http状态码
-  errorHandler: function (error: ResponseError) {
-    console.log(error);
-    if (error.response) {
-      switch (error.response.status) {
-        case 504:
-          message.error("连接服务器失败！")
-          break;
-        default:
-          message.error("您的网络异常")
       }
     }
   },

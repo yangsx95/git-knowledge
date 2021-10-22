@@ -69,7 +69,13 @@ func (l *LoginApiImpl) Registry(request *vo.RegistryRequest) error {
 }
 
 func (l *LoginApiImpl) Login(request *vo.LoginRequest) (*vo.LoginResponse, error) {
-	err, user := l.userDao.FindUserByUserid(request.Userid)
+	var err error
+	var user *model.User
+	if util.IsEmailAddr(request.Userid) {
+		err, user = l.userDao.FindUserByEmail(request.Userid)
+	} else {
+		err, user = l.userDao.FindUserByUserid(request.Userid)
+	}
 	if err != nil {
 		return nil, err
 	}
