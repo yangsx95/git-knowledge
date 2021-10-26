@@ -10,6 +10,7 @@ import type {API} from "@/services/user/typing";
 import {message} from 'antd';
 import type {RequestConfig} from "@@/plugin-request/request";
 import {ErrorShowType} from "@@/plugin-request/request";
+import {oauthLogin} from "@/services/login";
 
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -35,6 +36,23 @@ export async function getInitialState(): Promise<{
 }> {
   // 获取当前用户信息
   const fetchUserInfo = async () => {
+    // 判断是否有code参数，如果有代表第三方oauth登录
+    const ps = new URLSearchParams(history.location.search);
+    const code = ps.get("code");
+    const state = ps.get("state");
+    if (code) { // 有code，进行github 登录
+      const resp = await oauthLogin({
+        code: code,
+        redirect_url: window.location.href,
+        type: "github",
+        state: state || ""
+      });
+      if (resp.code == 200) {
+        // 设置token
+        localStorage.setItem("Token", resp.data.token);
+      }
+    }
+
     if (!localStorage.getItem("Token")) {
       history.push(loginPath);
       return undefined;
@@ -79,7 +97,7 @@ export async function getInitialState(): Promise<{
 // ProLayout 可以提供一个标准又不失灵活的中后台标准布局，同时提供一键切换布局形态，
 // 自动生成菜单等功能。与 PageContainer 配合使用可以自动生成面包屑，页面标题，并且提供低成本方案接入页脚工具栏。
 /**
- * 公共请求全局配置
+ * 请求request对象全局封装配置
  * @see https://umijs.org/zh-CN/plugins/plugin-request
  * @see https://github.com/umijs/umi-request/blob/master/README_zh-CN.md
  * umijs/plugin-request
@@ -89,7 +107,7 @@ export const request: RequestConfig = {
   // 请求url前缀
   prefix: '/api/v1',
   // 超时时间
-  timeout: 1000,
+  timeout: 300 * 1000,
   // 公共请求头
   headers: {
     'Accept': 'application/json',

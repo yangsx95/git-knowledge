@@ -11,8 +11,8 @@ import {useIntl, history, FormattedMessage, SelectLang, Link} from 'umi';
 import Footer from '@/components/Footer';
 
 import styles from './index.less';
-import {register} from "@/services/user";
-import type {API} from "@/services/user/typing";
+import {register} from "@/services/login";
+import type {API} from "@/services/login/typing";
 
 const LoginMessage: React.FC<{
   content: string;

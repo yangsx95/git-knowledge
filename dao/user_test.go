@@ -1,24 +1,23 @@
 package dao
 
 import (
+	"fmt"
 	"git-knowledge/dao/model"
 	"git-knowledge/db"
 	"testing"
 	"time"
 )
 
-func InitResourceForTest() *db.Resource {
-	resource, err := db.NewResource("127.0.0.1", "27017", "test", "root", "root123")
+func InitUserDao() UserDao {
+	resource, err := db.NewResource("127.0.0.1", "27017", "app", "root", "root123")
 	if err != nil {
 		panic(err)
 	}
-	return resource
+	return NewUserDao(resource)
 }
 
 func TestUserDaoImpl_InsertUser(t *testing.T) {
-	resource := InitResourceForTest()
-
-	dao := NewUserDao(resource)
+	dao := InitUserDao()
 	err := dao.InsertUser(model.User{
 		Userid:    "root",
 		Password:  "root123",
@@ -33,4 +32,13 @@ func TestUserDaoImpl_InsertUser(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func TestUserDaoImpl_UpdateUserGithubAccessToken(t *testing.T) {
+	dao := InitUserDao()
+	count, err := dao.UpdateUserGithubAccessToken("123456", "123456_test_access_token")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("更新条数：%v", count)
 }

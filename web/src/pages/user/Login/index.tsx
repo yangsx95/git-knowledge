@@ -13,8 +13,8 @@ import {useIntl, Link, history, FormattedMessage, SelectLang, useModel} from 'um
 import Footer from '@/components/Footer';
 
 import styles from './index.less';
-import type {API} from "@/services/user/typing";
-import {login} from "@/services/user";
+import type {API} from "@/services/login/typing";
+import {login, getOAuthAuthorizeUrl} from "@/services/login";
 
 const LoginMessage: React.FC<{
   content: string;
@@ -51,6 +51,14 @@ const Login: React.FC = () => {
         ...s,
         currentUser: userInfo,
       }));
+    }
+  };
+
+  // github 登录页面跳转
+  const githubLogin = async () => {
+    const resp = await getOAuthAuthorizeUrl('github');
+    if (resp.code == 200) {
+      window.location.href = resp.data.url;
     }
   };
 
@@ -305,7 +313,7 @@ const Login: React.FC = () => {
           </ProForm>
           <Space className={styles.other}>
             <FormattedMessage id="pages.login.loginWith" defaultMessage="其他登录方式"/>
-            <GithubOutlined className={styles.icon}/>
+            <GithubOutlined className={styles.icon} onClick={githubLogin}/>
             <WechatOutlined className={styles.icon}/>
             <AlipayCircleOutlined className={styles.icon}/>
           </Space>

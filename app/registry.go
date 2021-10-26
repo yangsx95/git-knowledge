@@ -11,15 +11,15 @@ import (
 // Dao 应用程序组件容器，所有Dao组件都需要注册到该文件中
 // 注意，要按照顺序依次注入
 type Dao struct {
-	UserDao           dao.UserDao
-	ThirdPartOAuthDao dao.OAuthDao
+	UserDao dao.UserDao
+	SeqDao  dao.SeqDao
 }
 
 func initDao(b *App) *Dao {
 	d := Dao{}
 
 	d.UserDao = dao.NewUserDao(b.db)
-	d.ThirdPartOAuthDao = dao.NewThirdPartOAuthDao(b.db)
+	d.SeqDao = dao.NewSeqDao(b.db)
 
 	return &d
 }
@@ -33,7 +33,7 @@ type Api struct {
 func initApi(app *App) *Api {
 	api := Api{}
 
-	api.LoginApi = v1.NewLoginApi(app.Dao.UserDao, app.Dao.ThirdPartOAuthDao)
+	api.LoginApi = v1.NewLoginApi(app.Dao.UserDao, app.Dao.SeqDao)
 	api.UserApi = v1.NewUserApi(app.Dao.UserDao)
 
 	return &api
@@ -53,7 +53,7 @@ func (a *App) initRouter() {
 	// 登录注册
 	groupV1.POST("/registry", a.Handler(api.LoginApi.Registry))
 	groupV1.POST("/login", a.Handler(api.LoginApi.Login))
-	groupV1.GET("/oauth/authorize_url", a.Handler(api.LoginApi.GetOAuthAuthorizeUrl))
+	groupV1.GET("/oauth/url", a.Handler(api.LoginApi.GetOAuthAuthorizeUrl))
 	groupV1.POST("/oauth/login", a.Handler(api.LoginApi.OAuthLogin))
 
 	// user 用户

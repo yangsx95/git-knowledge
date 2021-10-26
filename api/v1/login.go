@@ -4,13 +4,13 @@ import (
 	"git-knowledge/api/v1/vo"
 	"git-knowledge/dao"
 	"git-knowledge/dao/model"
+	"git-knowledge/logger"
 	"git-knowledge/middlewares"
 	"git-knowledge/result"
 	"git-knowledge/util"
 	"github.com/golang-jwt/jwt"
 	"net/url"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -26,16 +26,16 @@ type LoginApi interface {
 	GetOAuthAuthorizeUrl(request *vo.GetOAuthAuthorizeUrlRequest) *vo.GetOAuthAuthorizeUrlResponse
 
 	// OAuthLogin 用户授权成功后，调用此接口进行认证登录
-	OAuthLogin(request *vo.OAuthLoginRequest) error
+	OAuthLogin(request *vo.OAuthLoginRequest) (*vo.OAuthLoginResponse, error)
 }
 
 type LoginApiImpl struct {
-	userDao  dao.UserDao
-	oAuthDao dao.OAuthDao
+	userDao dao.UserDao
+	seqDao  dao.SeqDao
 }
 
-func NewLoginApi(userDao dao.UserDao, oAuthDao dao.OAuthDao) LoginApi {
-	return &LoginApiImpl{userDao: userDao, oAuthDao: oAuthDao}
+func NewLoginApi(userDao dao.UserDao, seqDao dao.SeqDao) LoginApi {
+	return &LoginApiImpl{userDao: userDao, seqDao: seqDao}
 }
 
 func (l *LoginApiImpl) Registry(request *vo.RegistryRequest) error {
@@ -125,34 +125,78 @@ func (l *LoginApiImpl) GetOAuthAuthorizeUrl(request *vo.GetOAuthAuthorizeUrlRequ
 	}
 }
 
-func (l *LoginApiImpl) OAuthLogin(request *vo.OAuthLoginRequest) error {
+func (l *LoginApiImpl) OAuthLogin(request *vo.OAuthLoginRequest) (*vo.OAuthLoginResponse, error) {
+	r := new(vo.OAuthLoginResponse)
 	switch request.Type {
 	case "github":
 		// 获取accessToken
 		resp, err := util.GetGithubAccessToken(os.Getenv("GITHUB_CLIENT_ID"), os.Getenv("GITHUB_SECRET"), request.Code, request.RedirectUrl)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if resp.Error != "" {
-			return result.ErrorOfWithDetail(result.CodeGithubAuthFail, resp.ErrorDescription)
+			return nil, result.ErrorOfWithDetail(result.CodeGithubAuthFail, resp.ErrorDescription)
 		}
 		// 根据token获取用户信息
 		client, ctx := util.GetGithubClient(resp.AccessToken)
-		user, _, err := client.Users.Get(ctx, "")
+		githubUser, _, err := client.Users.Get(ctx, "")
 		if err != nil {
-			return err
+			return nil, err
 		}
-		// 存储token以及第三方(github)登录信息
-		err = l.oAuthDao.Insert(model.OAuth{
-			Channel:     "github",
-			AccessToken: resp.AccessToken,
-			UserId:      strconv.FormatInt(*user.ID, 10),
-			AvatarURL:   *user.AvatarURL,
-			Email:       *user.Email,
+		var userid string
+		// 根据github用户id查询本地用户，如果不存在则新建用户
+		err, user := l.userDao.FindUserByGithubId(*githubUser.ID)
+		if err != nil {
+			return nil, err
+		}
+		// 新用户，立即自动注册
+		if user == nil {
+			// 生成git-knowledge id
+			newUserId, err := l.seqDao.GenUserId()
+			if err != nil {
+				return nil, err
+			}
+			// 创建用户
+			err = l.userDao.InsertUser(model.User{
+				Userid:    newUserId,
+				Password:  "123456",
+				Nickname:  githubUser.GetName(),
+				Email:     githubUser.GetEmail(),
+				Phone:     "",
+				AvatarUrl: githubUser.GetAvatarURL(),
+				CreatedAt: time.Time{},
+				UpdateAt:  time.Time{},
+				Github: model.Github{
+					Id:          githubUser.GetID(),
+					AccessToken: resp.AccessToken,
+				},
+			})
+			userid = newUserId
+		} else { // 老用户，更新AccessToken
+			count, err := l.userDao.UpdateUserGithubAccessToken(user.Userid, resp.AccessToken)
+			if err != nil {
+				return nil, err
+			}
+			if count == 0 {
+				// 更新失败
+				logger.Warn("更新用户%v的github access_token失败", user.Userid)
+				return nil, result.ErrorOf(result.CodeGithubLoginErr)
+			}
+			userid = user.Userid
+		}
+		// 注册完毕开始登录
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, &middlewares.JWTClaims{
+			Userid: userid,
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: time.Now().Add(time.Hour * 72).Unix(), // 有效期为72小时
+			},
 		})
+		// 生成token字符串
+		t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 		if err != nil {
-			return err
+			return nil, err
 		}
+		r.Token = t
 	}
-	return nil
+	return r, nil
 }

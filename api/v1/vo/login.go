@@ -14,7 +14,7 @@ type GetOAuthAuthorizeUrlRequest struct {
 }
 
 type OAuthLoginRequest struct {
-	Type        string `json:"type" xml:"type"`
+	Type        string `json:"type" xml:"type" validate:"oneof=github"`
 	Code        string `json:"code" xml:"code"`
 	State       string `json:"state" xml:"state"`
 	RedirectUrl string `json:"redirect_url" xml:"redirect_url"`
@@ -25,6 +25,7 @@ type GetOAuthAuthorizeUrlResponse struct {
 }
 
 type OAuthLoginResponse struct {
+	Token string `json:"token" xml:"token"`
 }
 
 type LoginRequest struct {

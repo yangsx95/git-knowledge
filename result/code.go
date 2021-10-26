@@ -23,6 +23,7 @@ const (
 	CodeServiceFail Code = 501
 
 	CodeGithubConnectionErr Code = 571
+	CodeGithubLoginErr      Code = 572
 )
 
 // String 错误码基本描述
@@ -59,6 +60,8 @@ func (c Code) String() string {
 
 	case CodeGithubConnectionErr:
 		return "与github服务器建立连接失败"
+	case CodeGithubLoginErr:
+		return "Github登录失败"
 	}
 	return ""
 }

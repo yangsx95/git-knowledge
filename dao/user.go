@@ -12,6 +12,8 @@ type UserDao interface {
 	InsertUser(user model.User) error
 	FindUserByUserid(userid string) (error, *model.User)
 	FindUserByEmail(email string) (error, *model.User)
+	FindUserByGithubId(id int64) (error, *model.User)
+	UpdateUserGithubAccessToken(userid, accessToken string) (int64, error)
 }
 
 type userDaoImpl struct {
@@ -62,4 +64,28 @@ func (u *userDaoImpl) FindUserByEmail(email string) (error, *model.User) {
 		return nil, nil
 	}
 	return nil, user
+}
+
+func (u *userDaoImpl) FindUserByGithubId(id int64) (error, *model.User) {
+	context, cancel := util.GetContextWithTimeout60Second()
+	defer cancel()
+	user := new(model.User)
+	err := u.collection.FindOne(context, bson.M{"github.id": id}).Decode(user)
+	if err != nil && err != mongo.ErrNoDocuments {
+		return err, nil
+	}
+	if err != nil {
+		return nil, nil
+	}
+	return nil, user
+}
+
+func (u *userDaoImpl) UpdateUserGithubAccessToken(userid, accessToken string) (int64, error) {
+	context, cancel := util.GetContextWithTimeout60Second()
+	defer cancel()
+	one, err := u.collection.UpdateOne(context, bson.M{"userid": userid}, bson.M{"$set": bson.M{"github.access_token": accessToken}})
+	if err != nil {
+		return 0, err
+	}
+	return one.ModifiedCount, nil
 }
