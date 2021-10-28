@@ -9,12 +9,12 @@
           {
             name: 'login',
             path: '/user/login',
-            component: './user/Login',
+            component: './User/Login',
           },
           {
             name: 'register',
             path: '/user/register',
-            component: './user/Register',
+            component: './User/Register',
           },
         ],
       },
@@ -23,36 +23,22 @@
       },
     ],
   },
+
   {
     path: '/welcome',
     name: 'welcome',
     icon: 'smile',
     component: './Welcome',
   },
+
   {
-    path: '/admin',
-    name: 'admin',
-    icon: 'crown',
+    path: '/space',
+    name: 'space',
+    icon: 'ant-cloud',
     access: 'canAdmin',
-    component: './Admin',
-    routes: [
-      {
-        path: '/admin/sub-page',
-        name: 'sub-page',
-        icon: 'smile',
-        component: './Welcome',
-      },
-      {
-        component: './404',
-      },
-    ],
+    component: './Space',
   },
-  {
-    name: 'list.table-list',
-    icon: 'table',
-    path: '/list',
-    component: './TableList',
-  },
+
   {
     path: '/',
     redirect: '/welcome',

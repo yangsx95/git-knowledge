@@ -7,7 +7,8 @@ const Settings: LayoutSettings & {
   navTheme: 'light',
   // 拂晓蓝
   primaryColor: '#1890ff',
-  layout: 'mix',
+  // 菜单展示在顶部
+  layout: 'top',
   contentWidth: 'Fluid',
   fixedHeader: false,
   fixSiderbar: true,

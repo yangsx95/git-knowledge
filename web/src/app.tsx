@@ -93,9 +93,7 @@ export async function getInitialState(): Promise<{
   };
 }
 
-// ProLayout 支持的api https://procomponents.ant.design/components/layout
-// ProLayout 可以提供一个标准又不失灵活的中后台标准布局，同时提供一键切换布局形态，
-// 自动生成菜单等功能。与 PageContainer 配合使用可以自动生成面包屑，页面标题，并且提供低成本方案接入页脚工具栏。
+
 /**
  * 请求request对象全局封装配置
  * @see https://umijs.org/zh-CN/plugins/plugin-request
@@ -139,11 +137,19 @@ export const request: RequestConfig = {
   requestInterceptors: [],
   responseInterceptors: [],
 };
+
+// ProLayout 支持的api https://procomponents.ant.design/components/layout
+// ProLayout 可以提供一个标准又不失灵活的中后台标准布局，同时提供一键切换布局形态，
+// 自动生成菜单等功能。与 PageContainer 配合使用可以自动生成面包屑，页面标题，并且提供低成本方案接入页脚工具栏。
 export const layout: RunTimeLayoutConfig = ({initialState}) => {
   return {
     // 自定义头右部的 render 方法
     rightContentRender: () => <RightContent/>,
     disableContentMargin: false,
+    // 关闭面包屑渲染
+    breadcrumbRender: false,
+    // 关闭页面标题渲染
+    pageTitleRender: false,
     // 配置水印，水印是 PageContainer 的功能，layout 只是透传给 PageContainer
     waterMarkProps: {
       content: initialState?.currentUser?.userid,
