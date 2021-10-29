@@ -25,19 +25,31 @@
   },
 
   {
+    path: '/space',
+    routes: [
+      {
+        path: '/space',
+        routes: [
+          {
+            name: 'new',
+            path: '/space/new',
+            component: './Space/New',
+          },
+        ],
+      },
+      {
+        component: './404',
+      },
+    ],
+  },
+
+  {
     path: '/welcome',
     name: 'welcome',
     icon: 'smile',
     component: './Welcome',
   },
 
-  {
-    path: '/space',
-    name: 'space',
-    icon: 'ant-cloud',
-    access: 'canAdmin',
-    component: './Space',
-  },
 
   {
     path: '/',

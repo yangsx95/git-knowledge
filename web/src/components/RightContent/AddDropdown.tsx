@@ -1,6 +1,6 @@
 import React, {useCallback} from 'react';
-import {CaretDownFilled, LogoutOutlined, SettingOutlined, UserOutlined} from '@ant-design/icons';
-import {Avatar, Menu, Spin} from 'antd';
+import {CaretDownFilled, PlusOutlined} from '@ant-design/icons';
+import {Menu, Spin} from 'antd';
 import {history, useModel} from 'umi';
 import {stringify} from 'querystring';
 import HeaderDropdown from '../HeaderDropdown';
@@ -30,7 +30,7 @@ const loginOut = async () => {
   }
 };
 
-const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({}) => {
+const AddDropdown: React.FC<GlobalHeaderRightProps> = ({}) => {
   const {initialState, setInitialState} = useModel('@@initialState');
 
   const onMenuClick = useCallback(
@@ -41,7 +41,7 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({}) => {
         loginOut();
         return;
       }
-      history.push(`/account/${key}`);
+      history.push(`/space/${key}`);
     },
     [setInitialState],
   );
@@ -70,28 +70,22 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({}) => {
 
   const menuHeaderDropdown = (
     <Menu className={styles.menu} selectedKeys={[]} onClick={onMenuClick}>
+      <Menu.Item key={"new"}>
+        创建空间
+      </Menu.Item>
       <Menu.Item>
-        <UserOutlined/>{currentUser.nickname}
-      </Menu.Item>
-      <Menu.Item key="settings">
-        <SettingOutlined/>
-        个人设置
-      </Menu.Item>
-      <Menu.Divider/>
-      <Menu.Item key="logout">
-        <LogoutOutlined/>
-        退出登录
+        创建组织
       </Menu.Item>
     </Menu>
   );
   return (
     <HeaderDropdown overlay={menuHeaderDropdown}>
       <span className={`${styles.action} ${styles.account}`}>
-        <Avatar size="small" className={styles.avatar} src={currentUser.avatar_url} alt="avatar"/>
+        <PlusOutlined style={{marginRight: 2}}/>
         <CaretDownFilled style={{fontSize: 11}}/>
       </span>
     </HeaderDropdown>
   );
 };
 
-export default AvatarDropdown;
+export default AddDropdown;
