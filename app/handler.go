@@ -114,20 +114,21 @@ func validateHandlerMethod(apiMethod interface{}) {
 		panic("handler处理器方法至多只能有两个返回值" + mT.Name())
 	}
 
-	// 返回值类别只能是struct或者error类型，并且数量要 <=2，且返回值类别不能相同
+	// 返回值类别只能是(data, error)或者 (data) 或者  (error)
+	// 其中 data 可以是 struct 或者 slice 结构
 	for i := 0; i < rLen; i++ {
 		rT := mT.Out(i)
 		if rT.Kind() == reflect.Ptr {
 			rT = rT.Elem()
 		}
-		if rT.Kind() != reflect.Struct && !util.IsErrType(rT) {
-			panic("handler处理器方法的返回值必须为struct或者error类型" + mT.Name())
+		if rT.Kind() != reflect.Struct && rT.Kind() != reflect.Slice && !util.IsErrType(rT) {
+			panic("handler处理器方法的返回值必须为struct、slice或者error类型" + mT.Name())
 		}
 
 		if rLen == 2 &&
-			((i == 0 && rT.Kind() != reflect.Struct) ||
+			((i == 0 && (rT.Kind() != reflect.Struct) && (rT.Kind() != reflect.Slice)) ||
 				(i == 1 && !util.IsErrType(rT))) {
-			panic("handler处理器方法的多返回值格式必须为 (struct,error)" + mT.Name())
+			panic("handler处理器方法的多返回值格式必须为 (struct,error) 或者 (slice, error)" + mT.Name())
 		}
 	}
 

@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"fmt"
 	"git-knowledge/dao/model"
 	"git-knowledge/db"
 	"testing"
@@ -32,13 +31,4 @@ func TestUserDaoImpl_InsertUser(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func TestUserDaoImpl_UpdateUserGithubAccessToken(t *testing.T) {
-	dao := InitUserDao()
-	count, err := dao.UpdateUserGithubAccessToken("123456", "123456_test_access_token")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("更新条数：%v", count)
 }

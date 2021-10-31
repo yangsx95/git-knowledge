@@ -26,8 +26,9 @@ func initDao(b *App) *Dao {
 
 // Api 组件注册对象
 type Api struct {
-	LoginApi v1.LoginApi
-	UserApi  v1.UserApi
+	LoginApi      v1.LoginApi
+	UserApi       v1.UserApi
+	CredentialApi v1.CredentialApi
 }
 
 func initApi(app *App) *Api {
@@ -35,6 +36,7 @@ func initApi(app *App) *Api {
 
 	api.LoginApi = v1.NewLoginApi(app.Dao.UserDao, app.Dao.SeqDao)
 	api.UserApi = v1.NewUserApi(app.Dao.UserDao)
+	api.CredentialApi = v1.NewCredentialApi(app.Dao.UserDao)
 
 	return &api
 }
@@ -58,4 +60,10 @@ func (a *App) initRouter() {
 
 	// user 用户
 	groupV1.GET("/user", a.Handler(api.UserApi.GetUser), jm)
+	groupV1.GET("/user/organizations", a.Handler(api.UserApi.GetOrganizations), jm)
+	groupV1.GET("/user/credentials", a.Handler(api.UserApi.GetCredentials), jm)
+
+	// credential 凭证
+	groupV1.GET("/credentials/:credential_id/organizations", a.Handler(api.CredentialApi.GetGitOrganizations), jm)
+	groupV1.GET("/credentials/:credential_id/organizations/:organization_id/repositories", a.Handler(api.CredentialApi.GetRepositories), jm)
 }

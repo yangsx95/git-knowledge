@@ -149,11 +149,11 @@ export const layout: RunTimeLayoutConfig = ({initialState}) => {
     // 关闭面包屑渲染
     breadcrumbRender: false,
     // 关闭页面标题渲染
-    pageTitleRender: false,
+    // pageTitleRender: false,
     // 配置水印，水印是 PageContainer 的功能，layout 只是透传给 PageContainer
-    waterMarkProps: {
-      content: initialState?.currentUser?.userid,
-    },
+    // waterMarkProps: {
+    //   content: initialState?.currentUser?.userid,
+    // },
     // 自定义页脚
     footerRender: () => <Footer/>,
     // 页面切换时触发，这里判断用户是否登录，如果没有登录，跳转到登录页面

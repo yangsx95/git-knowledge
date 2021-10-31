@@ -9,10 +9,40 @@
 
 概览： 
 1. 一个用户可包含多个Space空间
-2. 一个Space空间对应多个域名，以及一个 git-knowledge-config 配置仓库（名称可指定）
-3. 配置仓库主要包含Space的配置 `.gitknowledge`
-  ```ini
-  ```
+2. 一个空间对应一个Git主配置仓库
+3. 配置主仓库中可能组织自己以及其他仓库完成Space空间的内容
+
+配置主要采用yaml形式，示例格式如下：
+```yaml
+space:
+  # 空间的名称
+  name: 我的技术博客
+  
+# 定义子仓库(数据源)    
+repositories:
+  - name: notes
+    url: 主仓库url
+    branch: master
+    type: gitbook(使用gitbook的方式解析菜单)
+    target: 仓库目标处理文件, 比如 /doc
+  - name: Java
+    url: 仓库地址
+    branch: master
+    type: simple_markdown(根据markdown目录的方式解析菜单)
+    target: 仓库目标处理文件, 比如 /doc
+  - name: Golang
+    url: xxx
+    branch: master
+    type: hexo(根据hexo的方式解析菜单以及标签、访问量、点赞等)
+    target: xxx
+
+# 多仓库组织结构配置
+group:
+  - notes
+    - Java
+    - Golang
+```
+
 ## 基础功能
 - 注册
   - [x] 通过注册页面直接注册
@@ -29,6 +59,8 @@
   - [ ] 校验账号邮箱是否激活，如果未激活提示激活，阻止登录，并提示
     - [ ] Github注册登录无需校验邮箱
 - 首页
+- 新建功能菜单
+  - 新建空间
 - space 空间管理
   - [ ] space空间列表
   - 添加已有的space

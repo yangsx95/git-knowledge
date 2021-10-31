@@ -168,18 +168,23 @@ func (l *LoginApiImpl) OAuthLogin(request *vo.OAuthLoginRequest) (*vo.OAuthLogin
 				UpdateAt:  time.Time{},
 				Github: model.Github{
 					Id:          githubUser.GetID(),
+					GithubId:    githubUser.GetLogin(),
 					AccessToken: resp.AccessToken,
 				},
 			})
 			userid = newUserId
-		} else { // 老用户，更新AccessToken
-			count, err := l.userDao.UpdateUserGithubAccessToken(user.Userid, resp.AccessToken)
+		} else { // 老用户，更新Github信息
+			count, err := l.userDao.UpdateGithubInfo(user.Userid, &model.Github{
+				Id:          githubUser.GetID(),
+				GithubId:    githubUser.GetLogin(),
+				AccessToken: resp.AccessToken,
+			})
 			if err != nil {
 				return nil, err
 			}
 			if count == 0 {
 				// 更新失败
-				logger.Warn("更新用户%v的github access_token失败", user.Userid)
+				logger.Warn("更新用户%v的github信息失败", user.Userid)
 				return nil, result.ErrorOf(result.CodeGithubLoginErr)
 			}
 			userid = user.Userid

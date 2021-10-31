@@ -13,7 +13,7 @@ type UserDao interface {
 	FindUserByUserid(userid string) (error, *model.User)
 	FindUserByEmail(email string) (error, *model.User)
 	FindUserByGithubId(id int64) (error, *model.User)
-	UpdateUserGithubAccessToken(userid, accessToken string) (int64, error)
+	UpdateGithubInfo(userid string, githubInfo *model.Github) (int64, error)
 }
 
 type userDaoImpl struct {
@@ -80,10 +80,10 @@ func (u *userDaoImpl) FindUserByGithubId(id int64) (error, *model.User) {
 	return nil, user
 }
 
-func (u *userDaoImpl) UpdateUserGithubAccessToken(userid, accessToken string) (int64, error) {
+func (u *userDaoImpl) UpdateGithubInfo(userid string, githubInfo *model.Github) (int64, error) {
 	context, cancel := util.GetContextWithTimeout60Second()
 	defer cancel()
-	one, err := u.collection.UpdateOne(context, bson.M{"userid": userid}, bson.M{"$set": bson.M{"github.access_token": accessToken}})
+	one, err := u.collection.UpdateOne(context, bson.M{"userid": userid}, bson.M{"$set": bson.M{"github": githubInfo}})
 	if err != nil {
 		return 0, err
 	}

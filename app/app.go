@@ -13,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"os"
+	"reflect"
 )
 
 // App 应用程序对象
@@ -91,8 +92,41 @@ func NewEchoValidator(validate *validator.Validate) *EchoValidator {
 	return &EchoValidator{validate: validate}
 }
 
+type binderExtend struct {
+}
+
+func (cb *binderExtend) Bind(i interface{}, c echo.Context) (err error) {
+	// 默认绑定器
+	b := new(echo.DefaultBinder)
+	err = b.Bind(i, c)
+	if err != nil {
+		return err
+	}
+	// 解析path params
+	iType := reflect.TypeOf(i)
+	if iType.Kind() == reflect.Ptr {
+		iType = iType.Elem()
+	}
+	iValue := reflect.ValueOf(i)
+	if iValue.Kind() == reflect.Ptr {
+		iValue = iValue.Elem()
+	}
+	for i := 0; i < iType.NumField(); i++ {
+		fType := iType.Field(i)
+		t := fType.Tag.Get("url")
+		if t == "" || c.Param(t) == "" {
+			continue
+		}
+		fValue := iValue.Field(i)
+		fValue.Set(reflect.ValueOf(c.Param(t))) // 设置值
+	}
+	return
+}
+
 func (a *App) initEchoAndMiddleware() {
 	a.echo = echo.New()
+	// 数据绑定器
+	a.echo.Binder = new(binderExtend)
 	// 错误处理
 	a.echo.HTTPErrorHandler = func(err error, context echo.Context) {
 		trans, ok := a.ut.GetTranslator("zh")

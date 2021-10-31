@@ -16,5 +16,6 @@ type User struct {
 
 type Github struct {
 	Id          int64  `bson:"id"`
+	GithubId    string `bson:"github_id"`
 	AccessToken string `bson:"access_token"`
 }

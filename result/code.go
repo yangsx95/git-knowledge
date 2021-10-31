@@ -18,6 +18,7 @@ const (
 	CodeRegisterUserIdAlreadyExists = 440
 	CodeRegisterEmailAlreadyExists  = 441
 	CodeGithubAuthFail              = 450
+	CodeCredentialUseless           = 460
 
 	CodeInnerError  Code = 500
 	CodeServiceFail Code = 501
@@ -52,6 +53,9 @@ func (c Code) String() string {
 		return "邮箱已经被注册"
 	case CodeGithubAuthFail:
 		return "Github登录授权失败"
+
+	case CodeCredentialUseless:
+		return "无效的凭证"
 
 	case CodeServiceFail:
 		return "交易出错"
