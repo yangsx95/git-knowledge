@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {PageContainer} from '@ant-design/pro-layout';
 import {Card, Cascader} from 'antd';
 import ProForm, {
@@ -6,6 +6,7 @@ import ProForm, {
   ProFormSelect,
   ProFormList,
   ProFormGroup,
+  ProFormDependency,
 } from '@ant-design/pro-form';
 import {getCredentials, getGitOrgs, getGitRepos, getOrganizations} from "@/services/user";
 import ProFormItem from "@ant-design/pro-form/es/components/FormItem";
@@ -13,134 +14,115 @@ import type {CascaderOptionType} from "antd/lib/cascader";
 
 export default (): React.ReactNode => {
 
-  const [currentCredId, setCurrentCredId] = useState<string>("");
+  // 页面状态（是否是第一次加载）
+  const [onload, setOnload] = useState<boolean>(true);
+  // 凭据列表
+  const [credentials, setCredentials] = useState<{ value: string, label: string, }[]>([]);
 
-  const [gitOrgs, setGitOrgs] = useState<{
-    value: string,
-    label: string,
-    isLeaf: boolean,
-  }[]>([]);
-
-  function getOrgs() {
+  // 请求用户所有组织
+  const requestOrganizations = () => {
     return async () => {
       // 查询用户加入的所有组织
       const os = await getOrganizations();
-      const showOrgs: {
-        value: string,
-        label: string,
-      }[] = [];
+      const showOrganizations: { value: string, label: string }[] = [];
       os.data.forEach(o => {
-        showOrgs.push({
-          label: `${o.org_id}`,
-          value: o.org_id,
-        })
+        showOrganizations.push({label: `${o.org_id}`, value: o.org_id,})
       });
-      return showOrgs
+      return showOrganizations
     };
   }
 
-  function getCreds() {
-    return async () => {
-      const cs = await getCredentials();
-      const showCreds: {
-        value: string,
-        label: string,
-      }[] = [];
-      cs.data.forEach(o => {
-        showCreds.push({
-          label: `${o.name}`,
-          value: o.credential_id,
-        })
-      });
-      return showCreds
-    };
-  }
-
-
-  const loadData = async (selectedOptions?: CascaderOptionType[]) => {
-    if (!selectedOptions) {
-      return
+  // 获取指定凭据下的所有git组织
+  const getGitOrganizations = (credentialId: string): CascaderOptionType[] => {
+    const ops: CascaderOptionType[] = [];
+    if (!credentialId) {
+      return ops;
     }
+    (async () => {
+      const resp = await getGitOrgs(credentialId);
+      if (resp.code == 200) {
+        resp.data.forEach(e => {
+          ops.push({label: e.org_id, value: e.org_id, isLeaf: false})
+        });
+      }
+    })()
+    return ops;
+  }
 
-    const targetOption = selectedOptions[selectedOptions.length - 1];
-    targetOption.loading = true;
-
-    // 加载组织下的所有仓库
-    const repos = await getGitRepos(currentCredId, selectedOptions[0].value as string);
-    // 添加子节点
-    const arr = new Array<CascaderOptionType>();
-    repos.data.forEach(e => {
-      arr.push({
-        label: e.name,
-        value: e.name,
+  const loadData = (credentialId: string) => {
+    return async (selectedOptions?: CascaderOptionType[]) => {
+      if (!selectedOptions) {
+        return
+      }
+      if (!credentialId) {
+        return
+      }
+      const targetOption = selectedOptions[selectedOptions.length - 1];
+      targetOption.loading = true;
+      // 加载组织下的所有仓库
+      const repos = await getGitRepos(credentialId, selectedOptions[0].value as string);
+      // 添加子节点
+      const arr = new Array<CascaderOptionType>();
+      repos.data.forEach(e => {
+        arr.push({
+          label: e.name,
+          value: e.name,
+        })
       })
-    })
-    targetOption.children = arr;
-    targetOption.loading = false;
-
+      targetOption.children = arr;
+      targetOption.loading = false;
+    };
   };
 
-  // 更改凭证触发的事件（获取凭证下的所有组织）
-  const changeCred = async (value: string) => {
-    setCurrentCredId(value)
-    const go = await getGitOrgs(value);
-    if (go.code == 200) {
-      const ops: {
-        label: string
-        value: string
-        isLeaf: boolean
-      }[] = [];
-      go.data.forEach(e => {
-        ops.push({label: e.org_id, value: e.org_id, isLeaf: false})
-      });
-      setGitOrgs(ops);
+  useEffect(() => {
+    // 页面初始化数据
+    if (onload) {
+      setOnload(false);
+      // 加载凭据列表
+      (async () => {
+        const cs = await getCredentials();
+        const scs: { value: string, label: string, }[] = [];
+        cs.data.forEach(o => {
+          scs.push({label: `${o.name}`, value: o.credential_id,})
+        });
+        setCredentials(scs);
+      })();
     }
-  }
+    return () => {
+    }
+  }, [onload]);
 
   return (
     // PageContainer 封装了 antd 的 PageHeader 组件，增加了 tabList 和 content。
-    // 根据当前的路由填入 title 和 breadcrumb。它依赖 Layout 的 route 属性。当然你可以传入参数来复写默认值。 PageContainer 支持 Tabs 和 PageHeader 的所有属性。
+    // 根据当前的路由填入 title 和 breadcrumb。它依赖 Layout 的 route 属性。当然你可以传入参数来复写默认值。
+    // PageContainer 支持 Tabs 和 PageHeader 的所有属性。
     <PageContainer title={"创建一个空间"} subTitle={"空间可以包含多个git仓库，用于存储您知识库的数据"}>
-      <Card style={{width: '70%', marginLeft: '15%'}}>
-        <ProForm
-          onFinish={async (values) => console.log(values)}>
+      <Card>
+        <ProForm onFinish={async (values) => console.log(values)}>
           <ProForm.Group label="基本信息">
-            <ProFormSelect
-              request={getOrgs()}
-              name="owner"
-              label="所属"
-              width={120}
-              required={true}
-            />
-            <ProFormText
-              name="name"
-              label="空间名称"
-              tooltip="最长为 8 位"
-              placeholder="请输入空间名称"
-              width={300}
-              required={true}
-            />
-            <ProFormText name={"description"} label="描述" width={400}/>
+            <ProFormSelect label="所属" name="owner" request={requestOrganizations()} width={120} required={true}/>
+            <ProFormText label="空间名称" name="name" tooltip="最长为 8 位" placeholder="请输入空间名称" width={300} required={true}/>
+            <ProFormText label="描述" name="description" width={400}/>
           </ProForm.Group>
           <ProForm.Group label="主仓库">
-            <ProFormSelect
-              request={getCreds()}
-              width={120}
-              name="credential_id"
-              label="API凭据"
-              fieldProps={{onChange: changeCred}}
-            />
-            <ProFormItem label="选择仓库" name="repositoryUrl" tooltip="配置仓库，定义了space空间的配置" style={{width: 300}}>
-              <Cascader options={gitOrgs} loadData={loadData}/>
-            </ProFormItem>
+            <ProFormSelect label="API凭据" name="credential_id" options={credentials} width={120} required={true}/>
+            <ProFormDependency name={["credential_id"]} shouldUpdate={true}>
+              {(({credential_id}) => {
+                return (
+                  <ProFormItem label="选择仓库" tooltip="配置仓库，定义了space空间的配置" style={{width: 300}} required={true}
+                               shouldUpdate={true}  name={"main_repository_id"}>
+                    <Cascader options={getGitOrganizations(credential_id)} loadData={loadData(credential_id)}/>
+                  </ProFormItem>
+                );
+              })}
+            </ProFormDependency>
           </ProForm.Group>
           <ProForm.Group label="子仓库">
             <ProFormList
-              name="users"
+              name="child_repositories"
               rules={[
                 {
                   validator: async (_, value) => {
-                    console.log(value);
                     if (value && value.length > 0) {
                       return;
                     }
@@ -149,61 +131,23 @@ export default (): React.ReactNode => {
                 },
               ]}
               creatorRecord={{
-                name: 'test',
+                name: '',
               }}
-              initialValue={[
-                {
-                  name: '1111',
-                  nickName: '1111',
-                  age: 111,
-                  birth: '2021-02-18',
-                  sex: 'man',
-                  addrList: [{addr: ['taiyuan', 'changfeng']}],
-                },
-              ]}
+              initialValue={[]}
             >
               <ProFormGroup>
-                <ProFormSelect
-                  options={[
-                    {
-                      value: 'fasd',
-                      label: 'gitlab',
-                    },
-                    {
-                      value: 'fa',
-                      label: 'github',
-                    },
-                    {
-                      value: 'gia',
-                      label: 'gitlab-私服',
-                    },
-                  ]}
-                  width={120}
-                  name="main-repository"
-                  label="凭据"
-                />
-                <ProFormSelect
-                  width={300}
-                  options={[
-                    {
-                      value: 'time',
-                      label: 'notes',
-                    },
-                    {
-                      value: 'tes',
-                      label: 'spring',
-                    },
-                  ]}
-                  tooltip="配置仓库，定义了space空间的配置"
-                  name="repositoryUrl"
-                  label="选择仓库"
-                />
-                <ProFormText
-                  name="name"
-                  label="仓库名称"
-                  tooltip="最长为 8 位"
-                  width={300}
-                />
+                <ProFormSelect label="API凭据" name="credential_id" options={credentials} width={120} required={true}/>
+                <ProFormDependency name={["credential_id"]} shouldUpdate={true}>
+                  {(({credential_id}) => {
+                    return (
+                      <ProFormItem label="选择仓库" tooltip="配置仓库，定义了space空间的配置" style={{width: 300}} required={true}
+                                   name={"repository_id"} shouldUpdate={true}>
+                        <Cascader options={getGitOrganizations(credential_id)} loadData={loadData(credential_id)}/>
+                      </ProFormItem>
+                    );
+                  })}
+                </ProFormDependency>
+                <ProFormText label="仓库名称" name="repository_name" tooltip="最长为 8 位" width={300} required={true}/>
               </ProFormGroup>
             </ProFormList>
           </ProForm.Group>
