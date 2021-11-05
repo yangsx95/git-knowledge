@@ -11,8 +11,9 @@ import (
 // Dao 应用程序组件容器，所有Dao组件都需要注册到该文件中
 // 注意，要按照顺序依次注入
 type Dao struct {
-	UserDao dao.UserDao
-	SeqDao  dao.SeqDao
+	UserDao  dao.UserDao
+	SeqDao   dao.SeqDao
+	SpaceDao dao.SpaceDao
 }
 
 func initDao(b *App) *Dao {
@@ -20,6 +21,7 @@ func initDao(b *App) *Dao {
 
 	d.UserDao = dao.NewUserDao(b.db)
 	d.SeqDao = dao.NewSeqDao(b.db)
+	d.SpaceDao = dao.NewSpaceDao(b.db)
 
 	return &d
 }
@@ -29,6 +31,7 @@ type Api struct {
 	LoginApi      v1.LoginApi
 	UserApi       v1.UserApi
 	CredentialApi v1.CredentialApi
+	SpaceApi      v1.SpaceApi
 }
 
 func initApi(app *App) *Api {
@@ -37,7 +40,7 @@ func initApi(app *App) *Api {
 	api.LoginApi = v1.NewLoginApi(app.Dao.UserDao, app.Dao.SeqDao)
 	api.UserApi = v1.NewUserApi(app.Dao.UserDao)
 	api.CredentialApi = v1.NewCredentialApi(app.Dao.UserDao)
-
+	api.SpaceApi = v1.NewSpaceApi(app.Dao.SpaceDao)
 	return &api
 }
 
@@ -66,4 +69,7 @@ func (a *App) initRouter() {
 	// credential 凭证
 	groupV1.GET("/credentials/:credential_id/organizations", a.Handler(api.CredentialApi.GetGitOrganizations), jm)
 	groupV1.GET("/credentials/:credential_id/organizations/:organization_id/repositories", a.Handler(api.CredentialApi.GetRepositories), jm)
+
+	// space 空间
+	groupV1.POST("/space", a.Handler(api.SpaceApi.PostSpace), jm)
 }

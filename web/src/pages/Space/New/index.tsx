@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {PageContainer} from '@ant-design/pro-layout';
-import {Card, Cascader} from 'antd';
+import {Card, Cascader, message} from 'antd';
 import ProForm, {
   ProFormText,
   ProFormSelect,
@@ -11,6 +11,9 @@ import ProForm, {
 import {getCredentials, getGitOrgs, getGitRepos, getOrganizations} from "@/services/user";
 import ProFormItem from "@ant-design/pro-form/es/components/FormItem";
 import type {CascaderOptionType} from "antd/lib/cascader";
+import {postSpace} from "@/services/space";
+import type {API} from "@/services/space/typing";
+import {history} from "@@/core/history";
 
 export default (): React.ReactNode => {
 
@@ -74,6 +77,12 @@ export default (): React.ReactNode => {
     };
   };
 
+  const submitSpace = async (value: API.PostSpaceParam) => {
+    await postSpace(value)
+    message.success('提交成功');
+    history.push("/");
+  }
+
   useEffect(() => {
     // 页面初始化数据
     if (onload) {
@@ -98,28 +107,15 @@ export default (): React.ReactNode => {
     // PageContainer 支持 Tabs 和 PageHeader 的所有属性。
     <PageContainer title={"创建一个空间"} subTitle={"空间可以包含多个git仓库，用于存储您知识库的数据"}>
       <Card>
-        <ProForm onFinish={async (values) => console.log(values)}>
+        <ProForm onFinish={submitSpace}>
           <ProForm.Group label="基本信息">
             <ProFormSelect label="所属" name="owner" request={requestOrganizations()} width={120} required={true}/>
             <ProFormText label="空间名称" name="name" tooltip="最长为 8 位" placeholder="请输入空间名称" width={300} required={true}/>
             <ProFormText label="描述" name="description" width={400}/>
           </ProForm.Group>
-          <ProForm.Group label="主仓库">
-            <ProFormSelect label="API凭据" name="credential_id" options={credentials} width={120} required={true}/>
-            <ProFormDependency name={["credential_id"]} shouldUpdate={true}>
-              {(({credential_id}) => {
-                return (
-                  <ProFormItem label="选择仓库" tooltip="配置仓库，定义了space空间的配置" style={{width: 300}} required={true}
-                               shouldUpdate={true}  name={"main_repository_id"}>
-                    <Cascader options={getGitOrganizations(credential_id)} loadData={loadData(credential_id)}/>
-                  </ProFormItem>
-                );
-              })}
-            </ProFormDependency>
-          </ProForm.Group>
-          <ProForm.Group label="子仓库">
+          <ProForm.Group label="仓库">
             <ProFormList
-              name="child_repositories"
+              name="repositories"
               rules={[
                 {
                   validator: async (_, value) => {

@@ -34,7 +34,7 @@ func (c Code) String() string {
 		return "请求成功"
 
 	case CodeParseBodyErr:
-		return "错误的请求内容，可能与Content-Type不匹配"
+		return "错误的请求内容，可能与Content-Type不匹配或者参数有误"
 	case CodeNotFoundErr:
 		return "接口不存在"
 	case CodeValidateErr:
