@@ -10,3 +10,9 @@ export async function postSpace(body: API.PostSpaceParam) {
     data: body,
   });
 }
+
+export async function getAllSpaces() {
+  return request<API.FindAllSpacesResult>('/spaces', {
+    method: 'GET'
+  });
+}

@@ -23,12 +23,13 @@ export const initialStateConfig = {
   loading: <PageLoading/>,
 };
 
+// noinspection JSUnusedGlobalSymbols
 /**
  * @see  https://umijs.org/zh-CN/plugins/plugin-initial-state
  * 启用 umijs/plugin-initial-state：有 src/app.ts 并且导出 getInitialState 方法时启用
  * 功能：会在整个应用最开始执行，返回值会作为全局共享的数据，并通过 useModel('@@initialState') 直接获取数据
  *      也可以用来导出全局函数
- * */
+ */
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>; // ProLayout配置
   currentUser?: API.CurrentUser;  // 当前的登录用户，如果不存在将会跳转到登录页面

@@ -9,6 +9,9 @@ import (
 type SpaceApi interface {
 	// PostSpace 新建一个空间
 	PostSpace(request *vo.PostSpaceRequest) error
+
+	// ListAllByUserId 查找用户的所有Space
+	ListAllByUserId(request *vo.ListAllByUserIdRequest) (*[]vo.Space, error)
 }
 
 type spaceApiImpl struct {
@@ -36,4 +39,20 @@ func (s *spaceApiImpl) PostSpace(request *vo.PostSpaceRequest) error {
 		Repositories: &repos,
 	})
 	return err
+}
+
+func (s *spaceApiImpl) ListAllByUserId(request *vo.ListAllByUserIdRequest) (*[]vo.Space, error) {
+	ss, err := s.spaceDao.ListByUserId(request.Userid)
+	if err != nil {
+		return nil, err
+	}
+	spaces := make([]vo.Space, 0)
+	for _, s := range *ss {
+		spaces = append(spaces, vo.Space{
+			Name:        s.Name,
+			Description: s.Description,
+			Owner:       s.Owner,
+		})
+	}
+	return &spaces, err
 }

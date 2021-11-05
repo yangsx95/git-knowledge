@@ -1,63 +1,68 @@
-import React from 'react';
-import { PageContainer } from '@ant-design/pro-layout';
-import { Card, Alert, Typography } from 'antd';
-import { useIntl, FormattedMessage } from 'umi';
-import styles from './Welcome.less';
-
-const CodePreview: React.FC = ({ children }) => (
-  <pre className={styles.pre}>
-    <code>
-      <Typography.Text copyable>{children}</Typography.Text>
-    </code>
-  </pre>
-);
+import React, {useEffect, useState} from 'react';
+import {Avatar, Card, Divider, Layout} from "antd";
+import Sider from "antd/es/layout/Sider";
+import {Content} from "antd/es/layout/layout";
+import {DownOutlined} from "@ant-design/icons";
+import ProList from '@ant-design/pro-list';
+import {useModel} from "@@/plugin-model/useModel";
+import {getAllSpaces} from "@/services/space";
 
 export default (): React.ReactNode => {
-  const intl = useIntl();
-  return (
-    <PageContainer>
-      <Card>
-        <Alert
-          message={intl.formatMessage({
-            id: 'pages.welcome.alertMessage',
-            defaultMessage: 'Faster and stronger heavy-duty components have been released.',
-          })}
-          type="success"
-          showIcon
-          banner
-          style={{
-            margin: -12,
-            marginBottom: 24,
+  const {initialState} = useModel('@@initialState');
+  // @ts-ignore
+  const {currentUser} = initialState;
+  const [onload, setOnload] = useState<boolean>(true);
+  const [listData, setListData] = useState<{ name: string; image: string; }[]>([]);
+
+  useEffect(() => {
+    if (onload) {
+      setOnload(false);
+      (async () => {
+        const ss = await getAllSpaces();
+        const showSpaces: { name: string; image: string; }[] = [];
+        ss.data.forEach(o => {
+          showSpaces.push({name: o.name, image: currentUser.avatar_url})
+        });
+        setListData(showSpaces);
+      })();
+    }
+    return () => {
+    }
+  }, [currentUser.avatar_url, onload]);
+
+  return (<>
+    <Layout>
+      <Sider style={{backgroundColor: "white"}} width={"25%"}>
+        <Card bordered={false}>
+          <Avatar size={"small"} icon={<Avatar src={currentUser.avatar_url}/>}/> {currentUser.nickname}
+          <DownOutlined style={{fontSize: 11}}/>
+        </Card>
+        <Divider dashed style={{marginTop: 0, marginBottom: 0}}/>
+        <ProList
+          onRow={(record: any) => {
+            return {
+              onMouseEnter: () => {
+                console.log(record);
+              },
+              onClick: () => {
+                console.log(record);
+              },
+            };
           }}
+          headerTitle={"Spaces"}
+          rowKey="name"
+          metas={{
+            title: {
+              dataIndex: 'name',
+            },
+            avatar: {
+              dataIndex: 'image',
+            },
+          }}
+          dataSource={listData}
         />
-        <Typography.Text strong>
-          <FormattedMessage id="pages.welcome.advancedComponent" defaultMessage="Advanced Form" />{' '}
-          <a
-            href="https://procomponents.ant.design/components/table"
-            rel="noopener noreferrer"
-            target="__blank"
-          >
-            <FormattedMessage id="pages.welcome.link" defaultMessage="Welcome" />
-          </a>
-        </Typography.Text>
-        <CodePreview>yarn add @ant-design/pro-table</CodePreview>
-        <Typography.Text
-          strong
-          style={{
-            marginBottom: 12,
-          }}
-        >
-          <FormattedMessage id="pages.welcome.advancedLayout" defaultMessage="Advanced layout" />{' '}
-          <a
-            href="https://procomponents.ant.design/components/layout"
-            rel="noopener noreferrer"
-            target="__blank"
-          >
-            <FormattedMessage id="pages.welcome.link" defaultMessage="Welcome" />
-          </a>
-        </Typography.Text>
-        <CodePreview>yarn add @ant-design/pro-layout</CodePreview>
-      </Card>
-    </PageContainer>
-  );
+      </Sider>
+      <Content style={{backgroundColor: "white"}}>Content</Content>
+    </Layout>
+  </>);
 };

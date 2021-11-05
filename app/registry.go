@@ -72,4 +72,5 @@ func (a *App) initRouter() {
 
 	// space 空间
 	groupV1.POST("/space", a.Handler(api.SpaceApi.PostSpace), jm)
+	groupV1.GET("/spaces", a.Handler(api.SpaceApi.ListAllByUserId), jm)
 }
