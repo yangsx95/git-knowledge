@@ -3,8 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"git-knowledge/util"
-	"github.com/globalsign/mgo/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
@@ -51,22 +49,16 @@ func NewResource(host, port, database, username, password string) (*Resource, er
 }
 
 func initIndex(client *mongo.Database) {
-	ctx, cancel := util.GetContextWithTimeout60Second()
-	defer cancel()
-	one, err := client.Collection("user").Indexes().CreateMany(ctx, []mongo.IndexModel{{
-		Keys: bson.M{
-			"userid": 1,
-		},
-		Options: options.Index().SetUnique(true),
-	}, {
-		Keys: bson.M{
-			"email": 1,
-		},
-		Options: options.Index().SetUnique(true),
-	}})
+	err := CreateUniqueIndex(client.Collection("user"), "userid")
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(one)
+	err = CreateUniqueIndex(client.Collection("user"), "email")
+	if err != nil {
+		panic(err)
+	}
+	err = CreateUniqueIndex(client.Collection("space"), "owner", "name")
+	if err != nil {
+		panic(err)
+	}
 }
