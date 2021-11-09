@@ -31,6 +31,10 @@
         path: '/space',
         routes: [
           {
+            path: '/space/:orgId/:spaceId',
+            component: './Space',
+          },
+          {
             name: 'new',
             path: '/space/new',
             component: './Space/New',
@@ -45,7 +49,8 @@
 
   {
     path: '/welcome',
-    name: 'welcome',
+    // name属性决定该菜单是否展示
+    // name: 'welcome',
     icon: 'smile',
     component: './Welcome',
   },

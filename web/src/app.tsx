@@ -1,19 +1,17 @@
 import type {Settings as LayoutSettings} from '@ant-design/pro-layout';
 import {PageLoading} from '@ant-design/pro-layout';
 import type {RunTimeLayoutConfig} from 'umi';
-import {history, Link} from 'umi';
+import {history} from 'umi';
 import RightContent from '@/components/RightContent';
 import Footer from '@/components/Footer';
-import {BookOutlined, LinkOutlined} from '@ant-design/icons';
 import {getCurrentUser} from "@/services/user";
 import type {API} from "@/services/user/typing";
 import {message} from 'antd';
 import type {RequestConfig} from "@@/plugin-request/request";
 import {ErrorShowType} from "@@/plugin-request/request";
 import {oauthLogin} from "@/services/login";
+import HeaderLeft from "@/components/HeaderLeft";
 
-
-const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
 const registryPath = '/user/register';
 
@@ -167,21 +165,10 @@ export const layout: RunTimeLayoutConfig = ({initialState}) => {
         history.push(loginPath);
       }
     },
-    // 显示在菜单右下角的快捷操作
-    links: isDev
-      ? [
-        <Link to="/umi/plugin/openapi" target="_blank">
-          <LinkOutlined/>
-          <span>OpenAPI 文档</span>
-        </Link>,
-        <Link to="/~docs">
-          <BookOutlined/>
-          <span>业务组件文档</span>
-        </Link>,
-      ]
-      : [],
-    // 自定义的菜单头区域
-    menuHeaderRender: undefined,
+    headerRender: undefined,
+    // 自定义的菜单头区域(log和网站名称)
+    menuHeaderRender: () => <HeaderLeft />,
+    onMenuHeaderClick: () => {},
     // 自定义 403 页面
     // unAccessible: <div>unAccessible</div>,
     ...initialState?.settings,
