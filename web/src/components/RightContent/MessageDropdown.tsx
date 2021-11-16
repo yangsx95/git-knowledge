@@ -1,49 +1,28 @@
 import React, {useCallback} from 'react';
-import {PlusOutlined} from '@ant-design/icons';
+import {BellOutlined} from '@ant-design/icons';
 import {Menu, Spin} from 'antd';
 import {history, useModel} from 'umi';
-import {stringify} from 'querystring';
 import HeaderDropdown from '../HeaderDropdown';
 import styles from './index.less';
-import {outLogin} from '@/services/ant-design-pro/api';
 import type {MenuInfo} from 'rc-menu/lib/interface';
+import {ContentType, WebsocketProxy} from '@/util/websocket'
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
 };
 
-/**
- * 退出登录，并且将当前的 url 保存
- */
-const loginOut = async () => {
-  await outLogin();
-  const {query = {}, pathname} = history.location;
-  const {redirect} = query;
-  // Note: There may be security issues, please note
-  if (window.location.pathname !== '/user/login' && !redirect) {
-    history.replace({
-      pathname: '/user/login',
-      search: stringify({
-        redirect: pathname,
-      }),
-    });
-  }
-};
-
-const AddDropdown: React.FC<GlobalHeaderRightProps> = ({}) => {
-  const {initialState, setInitialState} = useModel('@@initialState');
+const MessageDropdown: React.FC<GlobalHeaderRightProps> = ({}) => {
+  const {initialState} = useModel('@@initialState');
 
   const onMenuClick = useCallback(
     (event: MenuInfo) => {
       const {key} = event;
-      if (key === 'logout') {
-        setInitialState((s) => ({...s, currentUser: undefined}));
-        loginOut();
-        return;
+      if (key === 'system') {
+        console.log("点击了系统消息");
       }
-      history.push(`/space/${key}`);
+      history.push(`/account/${key}`);
     },
-    [setInitialState],
+    [],
   );
 
   const loading = (
@@ -68,23 +47,45 @@ const AddDropdown: React.FC<GlobalHeaderRightProps> = ({}) => {
     return loading;
   }
 
+  // 读取消息
+  const ws = new WebsocketProxy("/message")
+
+  ws.onopen = function () {
+    console.log('Connected')
+  }
+
+  ws.onmessage = function (message) {
+    console.log(message)
+  }
+
+  ws.onerror = function (evt) {
+    console.log(evt)
+  }
+
+  setInterval(function () {
+    ws.send("sayHello", ContentType.Text, "Hello Server!");
+  }, 10000);
+
   const menuHeaderDropdown = (
     <Menu className={styles.menu} selectedKeys={[]} onClick={onMenuClick}>
-      <Menu.Item key={"new"}>
-        创建空间
+      <Menu.Item key="system">
+        系统通知
       </Menu.Item>
-      <Menu.Item>
-        创建组织
+      <Menu.Item key="stars">
+        评论关注
+      </Menu.Item>
+      <Menu.Item key="setting">
+        消息设置
       </Menu.Item>
     </Menu>
   );
   return (
     <HeaderDropdown overlay={menuHeaderDropdown}>
       <span className={`${styles.action} ${styles.account}`}>
-        <PlusOutlined style={{marginRight: 2}}/>
+        <BellOutlined/>
       </span>
     </HeaderDropdown>
   );
 };
 
-export default AddDropdown;
+export default MessageDropdown;

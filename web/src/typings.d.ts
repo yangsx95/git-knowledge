@@ -22,3 +22,8 @@ declare module 'bizcharts-plugin-slider';
 declare let ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION: 'site' | undefined;
 
 declare const REACT_APP_ENV: 'test' | 'dev' | 'pre' | false;
+
+// 自定义变量
+// https://pro.ant.design/zh-CN/docs/environment-manage/
+declare const SERVER_ADDRESS;
+declare const SERVER_ADDRESS_WS;

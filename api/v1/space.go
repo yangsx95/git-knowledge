@@ -38,6 +38,11 @@ func (s *spaceApiImpl) PostSpace(request *vo.PostSpaceRequest) error {
 		Owner:        request.Owner,
 		Repositories: &repos,
 	})
+	if err != nil {
+		return err
+	}
+	// 初始化空间
+	// TODO 初始化
 	return err
 }
 

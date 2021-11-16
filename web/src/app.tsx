@@ -167,8 +167,9 @@ export const layout: RunTimeLayoutConfig = ({initialState}) => {
     },
     headerRender: undefined,
     // 自定义的菜单头区域(log和网站名称)
-    menuHeaderRender: () => <HeaderLeft />,
-    onMenuHeaderClick: () => {},
+    menuHeaderRender: () => <HeaderLeft/>,
+    onMenuHeaderClick: () => {
+    },
     // 自定义 403 页面
     // unAccessible: <div>unAccessible</div>,
     ...initialState?.settings,

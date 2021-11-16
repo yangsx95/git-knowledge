@@ -1,5 +1,5 @@
 import React, {useCallback} from 'react';
-import {CaretDownFilled, LogoutOutlined, SettingOutlined, UserOutlined} from '@ant-design/icons';
+import {LogoutOutlined, SettingOutlined, UserOutlined} from '@ant-design/icons';
 import {Avatar, Menu, Spin} from 'antd';
 import {history, useModel} from 'umi';
 import {stringify} from 'querystring';
@@ -88,7 +88,6 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({}) => {
     <HeaderDropdown overlay={menuHeaderDropdown}>
       <span className={`${styles.action} ${styles.account}`}>
         <Avatar size="small" className={styles.avatar} src={currentUser.avatar_url} alt="avatar"/>
-        <CaretDownFilled style={{fontSize: 11}}/>
       </span>
     </HeaderDropdown>
   );

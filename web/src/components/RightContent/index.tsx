@@ -5,6 +5,7 @@ import Avatar from './AvatarDropdown';
 import HeaderSearch from '../HeaderSearch';
 import styles from './index.less';
 import AddDropdown from "@/components/RightContent/AddDropdown";
+import MessageDropdown from "@/components/RightContent/MessageDropdown";
 
 export type SiderTheme = 'light' | 'dark';
 
@@ -47,6 +48,7 @@ const GlobalHeaderRight: React.FC = () => {
         // }}
       />
       <AddDropdown/>
+      <MessageDropdown />
       <Avatar/>
       <SelectLang className={styles.action}/>
     </Space>

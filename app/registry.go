@@ -32,6 +32,8 @@ type Api struct {
 	UserApi       v1.UserApi
 	CredentialApi v1.CredentialApi
 	SpaceApi      v1.SpaceApi
+	RepositoryApi v1.RepositoryApi
+	MessageApi    v1.MessageApi
 }
 
 func initApi(app *App) *Api {
@@ -41,6 +43,8 @@ func initApi(app *App) *Api {
 	api.UserApi = v1.NewUserApi(app.Dao.UserDao)
 	api.CredentialApi = v1.NewCredentialApi(app.Dao.UserDao)
 	api.SpaceApi = v1.NewSpaceApi(app.Dao.SpaceDao)
+	api.RepositoryApi = v1.NewRepositoryApi()
+	api.MessageApi = v1.NewMessageApi()
 	return &api
 }
 
@@ -73,4 +77,10 @@ func (a *App) initRouter() {
 	// space 空间
 	groupV1.POST("/space", a.Handler(api.SpaceApi.PostSpace), jm)
 	groupV1.GET("/spaces", a.Handler(api.SpaceApi.ListAllByUserId), jm)
+
+	// websocket 服务
+	e.GET("/message", WebsocketHandler(map[string]interface{}{
+		"sayHello": a.Api.MessageApi.SayHello,
+	}))
+
 }

@@ -21,6 +21,8 @@ func (ehf *ErrorHandler) Handler(err error, translator *ut.Translator) *Response
 		panic("err不能为nil")
 	}
 
+	logger.Error("执行业务出现错误 %s", err)
+
 	var response *Response
 
 	switch err.(type) {

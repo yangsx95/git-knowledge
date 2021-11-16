@@ -1,10 +1,14 @@
 package app
 
 import (
+	"errors"
+	"git-knowledge/api/v1/vo"
+	"git-knowledge/logger"
 	"git-knowledge/result"
 	"git-knowledge/util"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/net/websocket"
 	"reflect"
 )
 
@@ -154,5 +158,126 @@ func generateResult(handler *result.ErrorHandler, translator *ut.Translator, rts
 			return handler.Handler(rv1.(error), translator)
 		}
 		return result.Build(result.CodeOk).WithData(rv0)
+	}
+}
+
+func WebsocketHandler(handlers map[string]interface{}) func(c echo.Context) error {
+	validateWebsocketHandler(handlers)
+
+	return func(c echo.Context) error {
+		websocket.Handler(func(ws *websocket.Conn) {
+			defer ws.Close()
+			// 不断接收客户端消息，当接收到消息，创建协程处理消息
+			for {
+				receiveMsg := result.NewEmptyMessage()
+				err := websocket.JSON.Receive(ws, &receiveMsg)
+				if err != nil {
+					logger.Error("websocket消息解析出错, %s", err)
+					_ = websocket.JSON.Send(ws, result.NewErrorMessage("", err))
+					continue
+				}
+
+				// 获取处理器
+				handler, ok := handlers[receiveMsg.Func]
+				if !ok { // 未知操作
+					_ = websocket.JSON.Send(ws, result.NewErrorMessage("", errors.New("未知的消息操作")))
+					continue
+				}
+
+				// 获取消息序列化器
+				serializer := result.GetSerializerByContentType(receiveMsg.ContentType)
+				if serializer == nil {
+					_ = websocket.JSON.Send(ws, result.NewErrorMessage("", errors.New("不支持的消息类型")))
+					continue
+				}
+
+				// 调用处理器完成消息处理
+				mT := reflect.TypeOf(handler)
+				mV := reflect.ValueOf(handler)
+				// 准备调用处理器方法所需的参数
+				invokeParams := make([]reflect.Value, 0)
+				for i := 0; i < mT.NumIn(); i++ {
+					inT := mT.In(i) // 参数类型
+					if inT.String() == "vo.WebsocketSender" {
+						// 构造websocketSender
+						wss := vo.WebsocketSender{Conn: ws, Func: receiveMsg.Func, ContentType: receiveMsg.ContentType}
+						invokeParams = append(invokeParams, reflect.ValueOf(wss))
+					} else if inT.Kind() == reflect.String {
+						inV := reflect.New(inT)
+						inV.Set(reflect.ValueOf(receiveMsg.Content))
+						invokeParams = append(invokeParams, inV)
+					} else if inT.Kind() == reflect.Struct || inT.Kind() == reflect.Slice {
+						//err := serializer.UnSerialize([]byte(receiveMsg.Content), inV.Interface())
+						//if err != nil {
+						//	_ = websocket.JSON.Send(ws, result.NewErrorMessage("", err))
+						//}
+					} else if inT.Kind() == reflect.Ptr { // 指针类型
+						inV := reflect.New(inT)
+						invokeParams = append(invokeParams, inV.Elem())
+						elemT := inT.Elem()
+						elemV := reflect.New(elemT)
+						if elemT.Kind() == reflect.String {
+							elemV.Elem().Set(reflect.ValueOf(receiveMsg.Content))
+						} else if elemT.Kind() == reflect.Struct || elemT.Kind() == reflect.Slice {
+							err := serializer.UnSerialize([]byte(receiveMsg.Content), elemV.Interface())
+							if err != nil {
+								_ = websocket.JSON.Send(ws, result.NewErrorMessage("", err))
+							}
+						}
+
+						inV.Elem().Set(elemV)
+					}
+				}
+				// 调用处理器
+				rVs := mV.Call(invokeParams)
+				for _, rV := range rVs {
+					if !rV.IsNil() {
+						_ = websocket.JSON.Send(ws, result.NewErrorMessage("", rV.Interface().(error)))
+						break
+					}
+				}
+			}
+		}).ServeHTTP(c.Response(), c.Request())
+		return nil
+	}
+}
+
+func validateWebsocketHandler(handlers map[string]interface{}) {
+	// 校验handlers
+	for _, apiMethod := range handlers {
+		if apiMethod == nil {
+			panic("handler处理器不可以为nil")
+		}
+
+		mT := reflect.TypeOf(apiMethod)
+
+		// handler必须是一个函数或者方法
+		if mT.Kind() != reflect.Func {
+			panic("handler处理器只能是方法" + mT.Name())
+		}
+
+		// 返回值只许是error类型
+		if !(mT.NumOut() == 0 || (mT.NumOut() == 1 && util.IsErrType(mT.Out(0)))) {
+			panic("handler处理器方法的返回值只能是错误类型" + mT.Name())
+		}
+
+		// 请求参数数量至多为2
+		pLen := mT.NumIn()
+		if pLen > 2 {
+			panic("handler处理器方法至多只能有两个请求参数" + mT.Name())
+		}
+
+		// 请求参数类型只能是 vo.WebsocketSender（也是一个struct）, string/*string、slice/*slice、struct/*struct 等类型
+		for i := 0; i < pLen; i++ {
+			pT := mT.In(i)
+			if pT.Kind() == reflect.Ptr {
+				pT = pT.Elem()
+			}
+			if pT.Kind() != reflect.Struct &&
+				pT.Kind() != reflect.Slice &&
+				pT.Kind() != reflect.String {
+				panic("handler处理器方法的参数类型只能为为 *websocket.Conn、string、slice、struct类型 " + mT.Name())
+			}
+		}
 	}
 }
