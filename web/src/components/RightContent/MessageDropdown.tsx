@@ -5,7 +5,6 @@ import {history, useModel} from 'umi';
 import HeaderDropdown from '../HeaderDropdown';
 import styles from './index.less';
 import type {MenuInfo} from 'rc-menu/lib/interface';
-import {ContentType, WebsocketProxy} from '@/util/websocket'
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -46,25 +45,6 @@ const MessageDropdown: React.FC<GlobalHeaderRightProps> = ({}) => {
   if (!currentUser || !currentUser.nickname) {
     return loading;
   }
-
-  // 读取消息
-  const ws = new WebsocketProxy("/message")
-
-  ws.onopen = function () {
-    console.log('Connected')
-  }
-
-  ws.onmessage = function (message) {
-    console.log(message)
-  }
-
-  ws.onerror = function (evt) {
-    console.log(evt)
-  }
-
-  setInterval(function () {
-    ws.send("sayHello", ContentType.Text, "Hello Server!");
-  }, 10000);
 
   const menuHeaderDropdown = (
     <Menu className={styles.menu} selectedKeys={[]} onClick={onMenuClick}>

@@ -2,7 +2,7 @@ package vo
 
 import (
 	"git-knowledge/result"
-	"golang.org/x/net/websocket"
+	"git-knowledge/ws"
 )
 
 type LoginInfo struct {
@@ -12,9 +12,9 @@ type LoginInfo struct {
 
 // WebsocketSender websocket发送器
 type WebsocketSender struct {
-	Conn        *websocket.Conn // websocket连接对象
-	Func        string          // 接收到的当前消息的主题，是由接受的客户端消息决定（使用值拷贝的方式传递给使用者，防止并发安全）
-	ContentType string          // 接收到的当前消息的内容类型，接受的内容类型为json，返回的类型必须也是json
+	Conn        *ws.Connection // websocket连接对象
+	Func        string         // 接收到的当前消息的主题，是由接受的客户端消息决定（使用值拷贝的方式传递给使用者，防止并发安全）
+	ContentType string         // 接收到的当前消息的内容类型，接受的内容类型为json，返回的类型必须也是json
 }
 
 func (sender *WebsocketSender) Send(value interface{}) error {
@@ -24,5 +24,5 @@ func (sender *WebsocketSender) Send(value interface{}) error {
 		return err
 	}
 	m := result.NewSuccessMessage(sender.Func, sender.ContentType, string(v))
-	return websocket.JSON.Send(sender.Conn, m)
+	return sender.Conn.SendJSON(m)
 }

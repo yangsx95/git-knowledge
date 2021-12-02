@@ -1,6 +1,8 @@
 package main
 
-import "git-knowledge/app"
+import (
+	"git-knowledge/app"
+)
 
 func main() {
 	b := app.NewApp()

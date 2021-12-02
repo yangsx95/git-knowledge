@@ -9,9 +9,8 @@ require (
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/go-github/v39 v39.1.0
+	github.com/gorilla/websocket v0.0.0-20170926233335-4201258b820c // indirect
 	github.com/joho/godotenv v1.4.0
-	github.com/kidstuff/mongostore v0.0.0-20181113001930-e650cd85ee4b
-	github.com/labstack/echo-contrib v0.11.0
 	github.com/labstack/echo/v4 v4.6.1
 	go.mongodb.org/mongo-driver v1.7.2
 	go.uber.org/zap v1.19.1

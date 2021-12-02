@@ -6,9 +6,10 @@ import (
 	"git-knowledge/logger"
 	"git-knowledge/result"
 	"git-knowledge/util"
+	"git-knowledge/ws"
 	ut "github.com/go-playground/universal-translator"
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/net/websocket"
 	"reflect"
 )
 
@@ -161,84 +162,84 @@ func generateResult(handler *result.ErrorHandler, translator *ut.Translator, rts
 	}
 }
 
-func WebsocketHandler(handlers map[string]interface{}) func(c echo.Context) error {
+func (a *App) WebsocketHandler(handlers map[string]interface{}) func(c echo.Context) error {
 	validateWebsocketHandler(handlers)
 
-	return func(c echo.Context) error {
-		websocket.Handler(func(ws *websocket.Conn) {
-			defer ws.Close()
-			// 不断接收客户端消息，当接收到消息，创建协程处理消息
-			for {
-				receiveMsg := result.NewEmptyMessage()
-				err := websocket.JSON.Receive(ws, &receiveMsg)
-				if err != nil {
-					logger.Error("websocket消息解析出错, %s", err)
-					_ = websocket.JSON.Send(ws, result.NewErrorMessage("", err))
-					continue
+	return func(c echo.Context) (err error) {
+		upgrader := websocket.Upgrader{}
+		var (
+			wsConn     *websocket.Conn
+			connection *ws.Connection
+		)
+		if wsConn, err = upgrader.Upgrade(c.Response(), c.Request(), nil); err != nil {
+			return err
+		}
+
+		// 创建Connection对象
+		connection = ws.InitConnection(wsConn)
+		defer connection.Close()
+
+		// 用户上线
+		a.wsConnMap.Online("", connection)
+
+		// 循环读取并处理消息
+		for {
+		ReceiveNew:
+			receiveMsg := result.NewEmptyMessage()
+			if err = connection.ReadJSON(receiveMsg); err != nil {
+				logger.Error("websocket读取消息出错, %s", err)
+				if err = connection.SendJSON(result.NewErrorMessage("", errors.New("消息格式有误"))); err != nil {
+					return
 				}
+				continue
+			}
 
-				// 获取处理器
-				handler, ok := handlers[receiveMsg.Func]
-				if !ok { // 未知操作
-					_ = websocket.JSON.Send(ws, result.NewErrorMessage("", errors.New("未知的消息操作")))
-					continue
+			var (
+				handler    interface{}
+				ok         bool
+				serializer result.Serializable
+			)
+
+			// 获取处理器
+			if handler, ok = handlers[receiveMsg.Func]; !ok {
+				// 这里如果发送消息出错，就代表连接有问题，中断循环，且与客户端连接中断
+				if err = connection.SendJSON(result.NewErrorMessage("", errors.New("未知的消息操作"))); err != nil {
+					return
 				}
+				continue
+			}
 
-				// 获取消息序列化器
-				serializer := result.GetSerializerByContentType(receiveMsg.ContentType)
-				if serializer == nil {
-					_ = websocket.JSON.Send(ws, result.NewErrorMessage("", errors.New("不支持的消息类型")))
-					continue
+			// 获取消息序列化器
+			if serializer = result.GetSerializerByContentType(receiveMsg.ContentType); serializer == nil {
+				if err = connection.SendJSON(result.NewErrorMessage("", errors.New("无法解析的消息类型"))); err != nil {
+					return
 				}
+				continue
+			}
 
-				// 调用处理器完成消息处理
-				mT := reflect.TypeOf(handler)
-				mV := reflect.ValueOf(handler)
-				// 准备调用处理器方法所需的参数
-				invokeParams := make([]reflect.Value, 0)
-				for i := 0; i < mT.NumIn(); i++ {
-					inT := mT.In(i) // 参数类型
-					if inT.String() == "vo.WebsocketSender" {
-						// 构造websocketSender
-						wss := vo.WebsocketSender{Conn: ws, Func: receiveMsg.Func, ContentType: receiveMsg.ContentType}
-						invokeParams = append(invokeParams, reflect.ValueOf(wss))
-					} else if inT.Kind() == reflect.String {
-						inV := reflect.New(inT)
-						inV.Set(reflect.ValueOf(receiveMsg.Content))
-						invokeParams = append(invokeParams, inV)
-					} else if inT.Kind() == reflect.Struct || inT.Kind() == reflect.Slice {
-						//err := serializer.UnSerialize([]byte(receiveMsg.Content), inV.Interface())
-						//if err != nil {
-						//	_ = websocket.JSON.Send(ws, result.NewErrorMessage("", err))
-						//}
-					} else if inT.Kind() == reflect.Ptr { // 指针类型
-						inV := reflect.New(inT)
-						invokeParams = append(invokeParams, inV.Elem())
-						elemT := inT.Elem()
-						elemV := reflect.New(elemT)
-						if elemT.Kind() == reflect.String {
-							elemV.Elem().Set(reflect.ValueOf(receiveMsg.Content))
-						} else if elemT.Kind() == reflect.Struct || elemT.Kind() == reflect.Slice {
-							err := serializer.UnSerialize([]byte(receiveMsg.Content), elemV.Interface())
-							if err != nil {
-								_ = websocket.JSON.Send(ws, result.NewErrorMessage("", err))
-							}
-						}
+			// 调用处理器完成消息处理
+			mT := reflect.TypeOf(handler)
+			mV := reflect.ValueOf(handler)
+			invokeParams := make([]reflect.Value, 0)
 
-						inV.Elem().Set(elemV)
+			var v reflect.Value
+			for i := 0; i < mT.NumIn(); i++ {
+				if v, err = process(mT.In(i), receiveMsg, connection, serializer); err != nil {
+					if err = connection.SendJSON(result.NewErrorMessage("", errors.New("消息内容解析失败，请确保消息合法"))); err != nil {
+						return
 					}
+					goto ReceiveNew
 				}
-				// 调用处理器
-				rVs := mV.Call(invokeParams)
-				for _, rV := range rVs {
-					if !rV.IsNil() {
-						_ = websocket.JSON.Send(ws, result.NewErrorMessage("", rV.Interface().(error)))
-						break
-					}
+				invokeParams = append(invokeParams, v)
+			}
+			// 调用处理器
+			rVs := mV.Call(invokeParams)
+			for _, rV := range rVs {
+				if !rV.IsNil() {
+					break
 				}
 			}
-		}).ServeHTTP(c.Response(), c.Request())
-		return nil
+		}
 	}
 }
 
@@ -280,4 +281,32 @@ func validateWebsocketHandler(handlers map[string]interface{}) {
 			}
 		}
 	}
+}
+func process(t reflect.Type, receiveMsg *result.Message, connection *ws.Connection, serializer result.Serializable) (v reflect.Value, err error) {
+	v = reflect.New(t) // new方法返回的是指针
+	switch t.Kind() {
+	case reflect.String:
+		v.Elem().Set(reflect.ValueOf(receiveMsg.Content))
+		v = v.Elem()
+	case reflect.Struct, reflect.Slice:
+		switch t.String() {
+		case "vo.WebsocketSender":
+			v.Elem().Set(reflect.ValueOf(vo.WebsocketSender{Conn: connection, Func: receiveMsg.Func, ContentType: receiveMsg.ContentType}))
+			v = v.Elem()
+		default:
+			if err = serializer.UnSerialize([]byte(receiveMsg.Content), v.Interface()); err != nil {
+				return
+			}
+			v = v.Elem()
+		}
+	case reflect.Ptr:
+		v = reflect.New(t.Elem())
+		var vv reflect.Value
+		if vv, err = process(t.Elem(), receiveMsg, connection, serializer); err != nil {
+			return
+		}
+		v.Elem().Set(vv)
+	default:
+	}
+	return
 }

@@ -5,6 +5,7 @@ import (
 	"git-knowledge/logger"
 	"git-knowledge/middlewares"
 	"git-knowledge/result"
+	"git-knowledge/ws"
 	"github.com/go-playground/locales/en"
 	"github.com/go-playground/locales/zh"
 	ut "github.com/go-playground/universal-translator"
@@ -25,6 +26,7 @@ type App struct {
 	validator    *validator.Validate
 	errorHandler *result.ErrorHandler
 	echo         *echo.Echo
+	wsConnMap    *ws.ConnectionMap
 }
 
 func NewApp() *App {
@@ -43,6 +45,8 @@ func NewApp() *App {
 	app.initErrorHandler()
 	// 初始化Dao组件
 	app.Dao = initDao(&app)
+	// 初始化websocket连接集合
+	app.wsConnMap = ws.NewConnectionMap()
 	// 初始化Api组件
 	app.Api = initApi(&app)
 	// 初始化web引擎

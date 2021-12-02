@@ -79,8 +79,14 @@ func (a *App) initRouter() {
 	groupV1.GET("/spaces", a.Handler(api.SpaceApi.ListAllByUserId), jm)
 
 	// websocket 服务
-	e.GET("/message", WebsocketHandler(map[string]interface{}{
-		"sayHello": a.Api.MessageApi.SayHello,
+	e.GET("/ws", a.WebsocketHandler(map[string]interface{}{
+		// 测试使用
+		"test/sayText":         a.Api.MessageApi.SayText,
+		"test/sayJson":         a.Api.MessageApi.SayJSON,
+		"test/sayJSONArray":    a.Api.MessageApi.SayJSONArray,
+		"test/sayPtrText":      a.Api.MessageApi.SayPtrText,
+		"test/sayPtrJSON":      a.Api.MessageApi.SayPtrJSON,
+		"test/sayPtrJSONArray": a.Api.MessageApi.SayPtrJSONArray,
 	}))
 
 }
