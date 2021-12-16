@@ -72,52 +72,75 @@ export class MessageBean {
 }
 
 /**
+ * 消息观察者
+ */
+interface WebsocketObserver {
+  /**
+   * 是否需要通知
+   */
+  needResponse: () => boolean
+  /**
+   * 正确通知
+   */
+  response: (message: any) => void
+
+  /**
+   * 错误通知
+   */
+  errorResponse: (errorMessage: string) => void
+}
+
+/**
  * Websocket代理对象，用于包装消息、发送消息
  */
-export class WebsocketProxy {
+export class WebsocketSubject {
 
   private websocket: WebSocket;
-  onopen: ((this: WebsocketProxy) => any) | null;
-  onclose: ((this: WebsocketProxy) => any) | null;
-  onerror: ((this: WebsocketProxy, errorMessage: string) => any) | null;
-  onmessage: ((this: WebsocketProxy, message: any) => any) | null;
+
+  private observers: WebsocketObserver[] = [];
 
   constructor(url: string) {
-    this.onopen = null;
-    this.onclose = null;
-    this.onmessage = null;
-    this.onerror = null;
     this.websocket = new WebSocket(SERVER_ADDRESS_WS + url);
     this.websocket.onopen = () => {
-      if (this.onopen) {
-        this.onopen()
-      }
+      console.log("websocket 建立了连接")
     }
     this.websocket.onclose = () => {
-      if (this.onclose) {
-        this.onclose();
-      }
+      console.log("websocket 关闭了连接")
     }
     this.websocket.onmessage = ev => {
-      if (ev.data) {
-        // 解析消息
-        const m: MessageBean = JSON.parse(ev.data);
-        let targetContent: any
-        if (m.success) {
-          switch (m.content_type) {
-            case 'text/plain':
-              targetContent = m.content.toString()
-              break;
-            case 'application/json':
-              targetContent = JSON.parse(m.content.toString())
-              break;
-          }
-          if (this.onmessage) this.onmessage(targetContent)
-        } else {
-          if (this.onerror) this.onerror(m.error_message)
-        }
+      if (!ev.data) {
+        return
       }
+      const m: MessageBean = JSON.parse(ev.data);
+      // 失败的消息
+      if (!m.success) {
+        this.observers.forEach(e => e.errorResponse(m.error_message))
+        return;
+      }
+      // 成功的消息
+      let targetContent: any
+      switch (m.content_type) {
+        case 'text/plain':
+          targetContent = m.content.toString()
+          break;
+        case 'application/json':
+          targetContent = JSON.parse(m.content.toString())
+          break;
+      }
+      this.observers.forEach(e => e.response(targetContent))
     }
+  }
+
+  add(observer: WebsocketObserver) {
+    this.observers.push(observer)
+  }
+
+  remove(observer: WebsocketObserver) {
+    const index = this.observers.indexOf(observer)
+    if (index < 0) {
+      return
+    }
+    this.observers.splice(index, 1);
   }
 
   send(func: string, contentType: ContentType, content: any): void {

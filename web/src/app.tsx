@@ -11,6 +11,7 @@ import type {RequestConfig} from "@@/plugin-request/request";
 import {ErrorShowType} from "@@/plugin-request/request";
 import {oauthLogin} from "@/services/login";
 import HeaderLeft from "@/components/HeaderLeft";
+import {WebsocketSubject} from "@/util/websocket";
 
 const loginPath = '/user/login';
 const registryPath = '/user/register';
@@ -32,6 +33,7 @@ export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>; // ProLayout配置
   currentUser?: API.CurrentUser;  // 当前的登录用户，如果不存在将会跳转到登录页面
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>; // 获取登录的用户信息函数
+  websocketSubject?: WebsocketSubject; // websocket观察者对象、代理对象
 }> {
   // 获取当前用户信息
   const fetchUserInfo = async () => {
@@ -76,6 +78,8 @@ export async function getInitialState(): Promise<{
     return undefined;
   };
 
+  // 获取websocket连接
+
   // 如果是登录或者注册页面，不执行
   if (history.location.pathname !== loginPath
     && history.location.pathname !== registryPath) {
@@ -83,7 +87,8 @@ export async function getInitialState(): Promise<{
     return {
       settings: {},
       fetchUserInfo,
-      currentUser: currentUser,
+      currentUser,
+      websocketSubject: new WebsocketSubject("/ws"),
     };
   }
   return {
@@ -174,6 +179,5 @@ export const layout: RunTimeLayoutConfig = ({initialState}) => {
     // unAccessible: <div>unAccessible</div>,
     ...initialState?.settings,
   };
-
 
 };
